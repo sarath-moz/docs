@@ -14,8 +14,7 @@
         "group": "Getting Started",
         "pages": [
           "accessibility-widget/introduction",
-          "accessibility-widget/installation",
-          "accessibility-widget/quickstart"
+          "accessibility-widget/installation"
         ]
       },
       {
