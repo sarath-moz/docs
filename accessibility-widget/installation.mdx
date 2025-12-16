@@ -1,130 +1,173 @@
 ---
 title: "Installation"
-description: "Install the WebYes Accessibility Widget on your website"
+description: "Install the WebYes Accessibility Widget on your Shopify store"
 ---
 
-## Installation Methods
+## Shopify App Installation
 
-The Accessibility Widget can be installed in several ways depending on your platform and needs.
+The Accessibility Widget is available as a Shopify app that can be easily installed and enabled through Theme App Embed. This is the recommended and only supported installation method.
 
-## Method 1: NPM Package (Recommended)
+## Step 1: Install the App
 
-Install the widget as an npm package for maximum flexibility:
+1. **Go to Shopify App Store**
+   - Navigate to the Shopify App Store
+   - Search for "WebYes Accessibility Widget" or "OneTap Pro Accessibility"
+   - Click **Add app** to install
 
-```bash
-npm install accessibility-widget
-```
+2. **Approve Permissions**
+   - Review the app permissions
+   - Click **Install app** to proceed
 
-Then import and initialize in your JavaScript:
+3. **Complete Installation**
+   - Wait for the installation to complete
+   - You'll be redirected to the app dashboard
 
-```javascript
-import { WidgetInitializer } from 'accessibility-widget';
-import { pluginConfig } from 'accessibility-widget/config';
+## Step 2: Enable Theme App Embed
 
-WidgetInitializer.init(pluginConfig);
-```
+The widget is installed as a **Theme App Embed**, which means it can be enabled directly from your theme customizer without modifying code.
 
-## Method 2: CDN (Quick Setup)
+### Enable via Theme Customizer
 
-Add the widget using a CDN link in your HTML:
+1. **Open Theme Customizer**
+   - Go to **Online Store** > **Themes** in your Shopify admin
+   - Click **Customize** on your active theme
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>My Website</title>
-</head>
-<body>
-  <!-- Your content -->
-  
-  <!-- Accessibility Widget -->
-  <script>
-    window._clvA11yConfig = {
-      iconId: "accessibility",
-      iconSize: 48,
-      language: "en",
-      position: {
-        mobile: "bottom-right",
-        desktop: "bottom-right"
-      },
-      theme: {
-        primaryColor: "#1a1a1a",
-        textColor: "#212529"
-      }
-    };
-  </script>
-  <script src="https://cdn.webyes.com/widget.min.js"></script>
-</body>
-</html>
-```
+2. **Navigate to App Embeds**
+   - In the theme customizer, look for **App embeds** in the left sidebar
+   - Or go to **Theme settings** > **App embeds**
 
-## Method 3: Shopify Integration
+3. **Enable the Widget**
+   - Find **Accessibility Widget** or **OneTap Pro Accessibility** in the list
+   - Toggle it **ON** to enable
+   - The widget will immediately appear on your storefront
 
-For Shopify stores, use the Liquid block:
+4. **Save Changes**
+   - Click **Save** in the top right corner
+   - The widget is now live on your store
+
+<Info>
+  Theme App Embeds allow apps to add functionality to your store without requiring code changes. The widget will automatically appear on all pages where app embeds are enabled.
+</Info>
+
+## Step 3: Configure the Widget
+
+Configure the widget settings through the app dashboard:
+
+1. **Access App Settings**
+   - Go to **Apps** in your Shopify admin
+   - Click on **Accessibility Widget** or **OneTap Pro Accessibility**
+
+2. **Configure Options**
+   - **Icon Settings**: Choose widget icon and size
+   - **Position**: Set widget position for mobile and desktop
+   - **Language**: Select default language
+   - **Features**: Enable/disable specific accessibility features
+   - **Profiles**: Enable/disable accessibility profiles
+   - **Theme**: Customize widget colors to match your store
+
+3. **Save Configuration**
+   - Click **Save** to apply changes
+   - Changes take effect immediately
+
+## Configuration via App Metafields
+
+The widget automatically reads configuration from Shopify app metafields. The app handles this automatically, but you can verify the configuration in your theme's Liquid code:
 
 ```liquid
-{% render 'accessibility-widget' %}
+{% assign app_data = app.metafields.widget.settings %}
+{% if app_data %}
+  <script>
+    window._clvA11yConfig = {{ app_data }};
+  </script>
+{% endif %}
 ```
-
-The widget will automatically read configuration from your Shopify app metafields.
 
 <Info>
-  See the [Shopify Integration Guide](/accessibility-widget/integration/shopify) for detailed setup instructions.
+  The app automatically manages metafields. You typically don't need to modify this code manually.
 </Info>
-
-## Method 4: WordPress Plugin
-
-If you're using WordPress, install the OneTap Pro Accessibility Plugin:
-
-1. Upload the plugin to `/wp-content/plugins/`
-2. Activate the plugin through the WordPress admin panel
-3. Configure settings in the plugin admin page
-
-<Info>
-  See the [WordPress Integration Guide](/accessibility-widget/integration/wordpress) for more details.
-</Info>
-
-## Method 5: Custom Integration
-
-For custom implementations, include the built JavaScript file:
-
-```html
-<script src="path/to/widget.min.js"></script>
-<script>
-  // Configure before initialization
-  window._clvA11yConfig = {
-    // Your configuration
-  };
-</script>
-```
-
-The widget will automatically initialize when the script loads.
-
-## Build from Source
-
-If you want to build from source:
-
-```bash
-# Clone the repository
-git clone https://github.com/webyes/accessibility-widget.git
-
-# Install dependencies
-npm install
-
-# Build for production
-npm run build
-
-# Build for development (with watch)
-npm run build:dev
-```
-
-The built files will be in the `dist/` directory.
 
 ## Verification
 
-After installation, you should see the accessibility widget icon appear on your website. Click it to verify all features are working correctly.
+After installation and enabling the app embed:
 
-<Warning>
-  Make sure to include the widget script before the closing `</body>` tag for optimal performance.
-</Warning>
+1. **Check Your Storefront**
+   - Visit your storefront
+   - Look for the accessibility widget icon (usually in the bottom-right corner)
 
+2. **Test the Widget**
+   - Click the widget icon to open it
+   - Verify all features are accessible
+   - Test different accessibility profiles
+
+3. **Mobile Testing**
+   - Check the widget on mobile devices
+   - Verify positioning and functionality
+
+## Troubleshooting
+
+### Widget Not Appearing
+
+- **Check App Embed Status**: Ensure the app embed is enabled in theme customizer
+- **Clear Cache**: Clear your browser cache and Shopify theme cache
+- **Check App Status**: Verify the app is installed and active in **Apps** section
+- **Theme Compatibility**: Some themes may require additional configuration
+
+### Configuration Not Working
+
+- **App Settings**: Verify settings are saved in the app dashboard
+- **Metafields**: Check that app metafields are properly set
+- **Theme Refresh**: Try refreshing the theme customizer
+
+### Need Help?
+
+- Check the [Shopify Integration Guide](/accessibility-widget/integration/shopify) for detailed setup
+- Contact support through the app dashboard
+- Review Shopify's [App Embed documentation](https://shopify.dev/docs/apps/online-store/theme-app-extensions)
+
+## Benefits of Theme App Embed
+
+<CardGroup cols={2}>
+  <Card
+    title="No Code Required"
+    icon="code"
+  >
+    Enable the widget without modifying any theme code
+  </Card>
+  <Card
+    title="Easy Updates"
+    icon="arrow-rotate-right"
+  >
+    App updates are automatically applied to your store
+  </Card>
+  <Card
+    title="Theme Safe"
+    icon="shield-check"
+  >
+    Won't break when you update your theme
+  </Card>
+  <Card
+    title="Quick Setup"
+    icon="rocket"
+  >
+    Get started in minutes with just a few clicks
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Configuration"
+    icon="cog"
+    href="/accessibility-widget/configuration"
+  >
+    Learn about all configuration options
+  </Card>
+  <Card
+    title="Quickstart"
+    icon="rocket"
+    href="/accessibility-widget/quickstart"
+  >
+    Get up and running quickly
+  </Card>
+</CardGroup>
