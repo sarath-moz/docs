@@ -1,0 +1,239 @@
+---
+title: "Quickstart"
+description: "Get started with the Accessibility Widget in 5 minutes"
+---
+
+## Quick Setup
+
+Get the Accessibility Widget running on your website in just a few steps.
+
+## Step 1: Include the Script
+
+Add the widget script to your HTML page:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Website</title>
+</head>
+<body>
+  <h1>Welcome to My Website</h1>
+  
+  <!-- Add widget configuration -->
+  <script>
+    window._clvA11yConfig = {
+      iconId: "accessibility",
+      iconSize: 48,
+      language: "en"
+    };
+  </script>
+  
+  <!-- Include widget script -->
+  <script src="https://cdn.webyes.com/widget.min.js"></script>
+</body>
+</html>
+```
+
+## Step 2: Basic Configuration
+
+Customize the widget appearance and behavior:
+
+```javascript
+window._clvA11yConfig = {
+  // Widget icon
+  iconId: "accessibility",  // Options: "default", "accessibility", "assist", "wheel"
+  iconSize: 48,
+  
+  // Language
+  language: "en",  // Default language code
+  
+  // Position
+  position: {
+    mobile: "bottom-right",   // "top-left", "top-right", "bottom-left", "bottom-right"
+    desktop: "bottom-right"
+  },
+  
+  // Margins (in pixels)
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    }
+  },
+  
+  // Theme colors
+  theme: {
+    primaryColor: "#1a1a1a",
+    textColor: "#212529"
+  }
+};
+```
+
+## Step 3: Enable Features
+
+Configure which features are available:
+
+```javascript
+window._clvA11yConfig = {
+  // ... basic config ...
+  
+  modules: {
+    color: {
+      brightness: { enabled: true },
+      invertColors: { enabled: true },
+      contrast: { enabled: true },
+      grayScale: { enabled: true },
+      saturation: { enabled: true }
+    },
+    content: {
+      biggerText: { enabled: true },
+      cursor: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      readableFont: { enabled: true },
+      alignText: { enabled: true },
+      textMagnifier: { enabled: true },
+      highlightLinks: { enabled: true }
+    },
+    orientation: {
+      readingLine: { enabled: true },
+      keyboardNavigation: { enabled: true },
+      highlightTitles: { enabled: true },
+      readingMask: { enabled: true },
+      hideImages: { enabled: true },
+      highlightAll: { enabled: true },
+      readPage: { enabled: true },
+      muteSounds: { enabled: true },
+      stopAnimations: { enabled: true }
+    }
+  },
+  
+  // Enable accessibility profiles
+  profiles: {
+    visionImpaired: { enabled: true },
+    seizureSafe: { enabled: true },
+    adhdFriendly: { enabled: true },
+    blindness: { enabled: true },
+    epilepsySafe: { enabled: true }
+  }
+};
+```
+
+## Step 4: Test It Out
+
+1. Open your website in a browser
+2. Look for the accessibility widget icon (usually bottom-right)
+3. Click the icon to open the widget
+4. Try different features and profiles
+
+## Complete Example
+
+Here's a complete working example:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessibility Widget Demo</title>
+</head>
+<body>
+  <main>
+    <h1>Welcome to Our Website</h1>
+    <p>This is a sample page with the accessibility widget enabled.</p>
+    <p>Click the accessibility icon in the bottom-right corner to access all features.</p>
+  </main>
+
+  <script>
+    window._clvA11yConfig = {
+      iconId: "accessibility",
+      iconSize: 48,
+      language: "en",
+      position: {
+        mobile: "bottom-right",
+        desktop: "bottom-right"
+      },
+      margins: {
+        desktop: { top: 20, bottom: 20, left: 20, right: 20 },
+        mobile: { top: 20, bottom: 20, left: 20, right: 20 }
+      },
+      theme: {
+        primaryColor: "#1a1a1a",
+        textColor: "#212529"
+      },
+      modules: {
+        color: {
+          brightness: { enabled: true },
+          invertColors: { enabled: true },
+          contrast: { enabled: true },
+          grayScale: { enabled: true },
+          saturation: { enabled: true }
+        },
+        content: {
+          biggerText: { enabled: true },
+          cursor: { enabled: true },
+          dyslexicFont: { enabled: true },
+          letterSpacing: { enabled: true },
+          lineHeight: { enabled: true },
+          readableFont: { enabled: true },
+          alignText: { enabled: true },
+          textMagnifier: { enabled: true },
+          highlightLinks: { enabled: true }
+        },
+        orientation: {
+          readingLine: { enabled: true },
+          keyboardNavigation: { enabled: true },
+          highlightTitles: { enabled: true },
+          readingMask: { enabled: true },
+          hideImages: { enabled: true },
+          highlightAll: { enabled: true },
+          readPage: { enabled: true },
+          muteSounds: { enabled: true },
+          stopAnimations: { enabled: true }
+        }
+      },
+      profiles: {
+        visionImpaired: { enabled: true },
+        seizureSafe: { enabled: true },
+        adhdFriendly: { enabled: true },
+        blindness: { enabled: true },
+        epilepsySafe: { enabled: true }
+      }
+    };
+  </script>
+  <script src="https://cdn.webyes.com/widget.min.js"></script>
+</body>
+</html>
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Configuration"
+    icon="cog"
+    href="/accessibility-widget/configuration"
+  >
+    Learn about all configuration options
+  </Card>
+  <Card
+    title="Features"
+    icon="list"
+    href="/accessibility-widget/features/overview"
+  >
+    Explore all available features
+  </Card>
+</CardGroup>
+

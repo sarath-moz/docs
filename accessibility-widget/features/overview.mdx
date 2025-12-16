@@ -1,0 +1,172 @@
+---
+title: "Features Overview"
+description: "Complete overview of all accessibility features"
+---
+
+## Features Overview
+
+The Accessibility Widget provides a comprehensive set of features organized into four main categories:
+
+## Feature Categories
+
+<CardGroup cols={2}>
+  <Card
+    title="Profiles"
+    icon="user"
+    href="/accessibility-widget/features/profiles"
+  >
+    Pre-configured accessibility profiles that activate multiple features at once
+  </Card>
+  <Card
+    title="Content"
+    icon="text"
+    href="/accessibility-widget/features/content"
+  >
+    Text and content adjustment features for better readability
+  </Card>
+  <Card
+    title="Color"
+    icon="palette"
+    href="/accessibility-widget/features/color"
+  >
+    Visual color adjustments for better visibility
+  </Card>
+  <Card
+    title="Orientation"
+    icon="compass"
+    href="/accessibility-widget/features/orientation"
+  >
+    Navigation and reading aids for better orientation
+  </Card>
+</CardGroup>
+
+## Quick Reference
+
+### Profiles (5)
+- Vision Impaired Mode
+- Seizure Safe Profile
+- ADHD Friendly Mode
+- Blindness Mode
+- Epilepsy Safe Mode
+
+### Content Features (9)
+- Bigger Text
+- Cursor
+- Line Height
+- Letter Spacing
+- Readable Font
+- Dyslexic Font
+- Align Text
+- Text Magnifier
+- Highlight Links
+
+### Color Features (5)
+- Invert Colors
+- Brightness
+- Contrast
+- Grayscale
+- Saturation
+
+### Orientation Features (9)
+- Reading Line
+- Keyboard Navigation
+- Highlight Titles
+- Reading Mask
+- Hide Images
+- Highlight All
+- Read Page
+- Mute Sounds
+- Stop Animations
+
+## Feature Levels
+
+Some features support multiple levels of adjustment:
+
+- **Level 0**: Off/Default
+- **Level 1**: Light adjustment
+- **Level 2**: Moderate adjustment
+- **Level 3**: Maximum adjustment
+
+Features with levels:
+- Bigger Text (3 levels)
+- Cursor (3 levels)
+- Line Height (3 levels)
+- Letter Spacing (3 levels)
+- Align Text (3 levels)
+- Invert Colors (3 levels)
+- Brightness (3 levels)
+- Contrast (3 levels)
+- Grayscale (3 levels)
+- Saturation (3 levels)
+
+## Enabling Features
+
+Configure which features are available:
+
+```javascript
+window._clvA11yConfig = {
+  modules: {
+    color: {
+      brightness: { enabled: true },
+      invertColors: { enabled: true },
+      contrast: { enabled: true },
+      grayScale: { enabled: true },
+      saturation: { enabled: true }
+    },
+    content: {
+      biggerText: { enabled: true },
+      cursor: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      readableFont: { enabled: true },
+      alignText: { enabled: true },
+      textMagnifier: { enabled: true },
+      highlightLinks: { enabled: true }
+    },
+    orientation: {
+      readingLine: { enabled: true },
+      keyboardNavigation: { enabled: true },
+      highlightTitles: { enabled: true },
+      readingMask: { enabled: true },
+      hideImages: { enabled: true },
+      highlightAll: { enabled: true },
+      readPage: { enabled: true },
+      muteSounds: { enabled: true },
+      stopAnimations: { enabled: true }
+    }
+  }
+};
+```
+
+## Feature Persistence
+
+User preferences are automatically saved to localStorage and persist across page loads. Users can reset all settings using the reset button in the widget.
+
+## Next Steps
+
+Explore each feature category in detail:
+
+<CardGroup cols={2}>
+  <Card
+    title="Profiles"
+    icon="user"
+    href="/accessibility-widget/features/profiles"
+  />
+  <Card
+    title="Content Features"
+    icon="text"
+    href="/accessibility-widget/features/content"
+  />
+  <Card
+    title="Color Features"
+    icon="palette"
+    href="/accessibility-widget/features/color"
+  />
+  <Card
+    title="Orientation Features"
+    icon="compass"
+    href="/accessibility-widget/features/orientation"
+  />
+</CardGroup>
+

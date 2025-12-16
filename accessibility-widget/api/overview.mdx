@@ -1,0 +1,198 @@
+---
+title: "API Overview"
+description: "Programmatic API for controlling the Accessibility Widget"
+---
+
+## API Overview
+
+The Accessibility Widget provides a JavaScript API for programmatic control and integration with your application.
+
+## Accessing the API
+
+After the widget loads, you can access the API through the global `AccessibilityWidget` object:
+
+```javascript
+// Check if widget is initialized
+if (AccessibilityWidget.isInitialized()) {
+  // Widget is ready
+}
+```
+
+## Core Methods
+
+### Initialization
+
+```javascript
+AccessibilityWidget.init()
+```
+
+Initialize the accessibility widget. This is called automatically when the script loads, but can be called manually if needed.
+
+### Open Widget
+
+```javascript
+AccessibilityWidget.open()
+```
+
+Programmatically open the widget panel.
+
+### Close Widget
+
+```javascript
+AccessibilityWidget.close()
+```
+
+Programmatically close the widget panel.
+
+### Toggle Widget
+
+```javascript
+AccessibilityWidget.toggle()
+```
+
+Toggle the widget open/closed state.
+
+### Check Initialization
+
+```javascript
+const isReady = AccessibilityWidget.isInitialized()
+```
+
+Returns `true` if the widget has been initialized, `false` otherwise.
+
+### Reset Widget
+
+```javascript
+AccessibilityWidget.reset()
+```
+
+Reset the widget state and clear all user preferences.
+
+## Usage Examples
+
+### Open Widget on Button Click
+
+```javascript
+document.getElementById('open-accessibility').addEventListener('click', () => {
+  AccessibilityWidget.open();
+});
+```
+
+### Close Widget Programmatically
+
+```javascript
+// Close widget after user action
+AccessibilityWidget.close();
+```
+
+### Toggle Widget
+
+```javascript
+// Toggle widget with keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'a') {
+    e.preventDefault();
+    AccessibilityWidget.toggle();
+  }
+});
+```
+
+### Check Widget Status
+
+```javascript
+if (AccessibilityWidget.isInitialized()) {
+  console.log('Widget is ready');
+  AccessibilityWidget.open();
+} else {
+  console.log('Widget not yet initialized');
+}
+```
+
+## Widget Initializer API
+
+For more advanced control, use the `WidgetInitializer`:
+
+```javascript
+import { WidgetInitializer } from 'accessibility-widget';
+import { pluginConfig } from 'accessibility-widget/config';
+
+// Initialize with custom config
+WidgetInitializer.init(pluginConfig);
+
+// Get widget instance
+const widget = WidgetInitializer.getWidget();
+
+// Get container element
+const container = WidgetInitializer.getContainer();
+
+// Destroy widget
+WidgetInitializer.destroy();
+```
+
+## Events
+
+The widget can dispatch custom events that you can listen to:
+
+```javascript
+// Listen for widget open
+document.addEventListener('a11y-widget-open', () => {
+  console.log('Widget opened');
+});
+
+// Listen for widget close
+document.addEventListener('a11y-widget-close', () => {
+  console.log('Widget closed');
+});
+
+// Listen for feature changes
+document.addEventListener('a11y-feature-change', (e) => {
+  console.log('Feature changed:', e.detail);
+});
+```
+
+## Configuration API
+
+Access the current configuration:
+
+```javascript
+// Get current config
+const config = window._clvA11yConfig;
+
+// Update config (before widget loads)
+window._clvA11yConfig = {
+  ...config,
+  language: 'fr'
+};
+```
+
+## Storage API
+
+The widget uses localStorage to persist user preferences. You can access these directly:
+
+```javascript
+// Get stored preferences
+const preferences = localStorage.getItem('clv-a11y-preferences');
+
+// Clear preferences
+localStorage.removeItem('clv-a11y-preferences');
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Configuration API"
+    icon="cog"
+    href="/accessibility-widget/api/configuration"
+  >
+    Learn about configuration options
+  </Card>
+  <Card
+    title="Methods Reference"
+    icon="code"
+    href="/accessibility-widget/api/methods"
+  >
+    Detailed method documentation
+  </Card>
+</CardGroup>
+

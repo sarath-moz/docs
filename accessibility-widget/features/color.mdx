@@ -1,0 +1,143 @@
+---
+title: "Color Features"
+description: "Visual color adjustments for better visibility and accessibility"
+---
+
+## Color Features
+
+Color features allow users to adjust visual appearance to improve visibility, reduce eye strain, and accommodate color vision deficiencies.
+
+## Color Adjustment Features
+
+### Invert Colors
+
+Invert the color scheme of the website. Useful for users with light sensitivity or those who prefer dark backgrounds.
+
+**Levels:** 0 (off), 1 (partial), 2 (moderate), 3 (full inversion)
+
+**Enable:**
+```javascript
+modules: {
+  color: {
+    invertColors: { enabled: true }
+  }
+}
+```
+
+### Brightness
+
+Adjust screen brightness. Lower brightness reduces eye strain, while higher brightness improves visibility.
+
+**Levels:** 0 (default), 1 (slightly dimmed), 2 (moderately dimmed), 3 (significantly dimmed)
+
+**Enable:**
+```javascript
+modules: {
+  color: {
+    brightness: { enabled: true }
+  }
+}
+```
+
+### Contrast
+
+Increase or decrease contrast between text and background. Higher contrast improves readability.
+
+**Levels:** 0 (default), 1 (slight increase), 2 (moderate increase), 3 (high contrast)
+
+**Enable:**
+```javascript
+modules: {
+  color: {
+    contrast: { enabled: true }
+  }
+}
+```
+
+### Grayscale
+
+Convert the website to grayscale. Useful for users with color blindness or those who prefer monochrome displays.
+
+**Levels:** 0 (off), 1 (partial), 2 (moderate), 3 (full grayscale)
+
+**Enable:**
+```javascript
+modules: {
+  color: {
+    grayScale: { enabled: true }
+  }
+}
+```
+
+### Saturation
+
+Adjust color saturation. Lower saturation can reduce visual distractions, while higher saturation can improve color distinction.
+
+**Levels:** 0 (default), 1 (slight reduction), 2 (moderate reduction), 3 (desaturated)
+
+**Enable:**
+```javascript
+modules: {
+  color: {
+    saturation: { enabled: true }
+  }
+}
+```
+
+## Complete Color Configuration
+
+```javascript
+window._clvA11yConfig = {
+  modules: {
+    color: {
+      brightness: { enabled: true },
+      invertColors: { enabled: true },
+      contrast: { enabled: true },
+      grayScale: { enabled: true },
+      saturation: { enabled: true }
+    }
+  }
+};
+```
+
+## Feature Combinations
+
+Color features can be combined for different effects:
+
+- **Grayscale + Contrast**: Monochrome with high contrast for maximum readability
+- **Invert Colors + Brightness**: Dark mode with reduced brightness
+- **Saturation + Contrast**: Desaturated colors with high contrast
+- **Brightness + Contrast**: Dimmed display with enhanced contrast
+
+## Use Cases
+
+### Light Sensitivity
+- **Brightness** (Level 2-3): Reduce screen brightness
+- **Invert Colors** (Level 3): Switch to dark mode
+
+### Color Blindness
+- **Grayscale** (Level 3): Remove color dependency
+- **Contrast** (Level 3): Maximize contrast for better distinction
+
+### Eye Strain
+- **Brightness** (Level 1-2): Reduce brightness
+- **Saturation** (Level 2-3): Reduce color intensity
+
+### Visual Clarity
+- **Contrast** (Level 2-3): Increase contrast
+- **Saturation** (Level 1): Slight color enhancement
+
+## Best Practices
+
+1. **Enable All Options**: Provide users with maximum flexibility
+2. **Level Testing**: Test all levels to ensure they work with your design
+3. **Performance**: Color filters are applied via CSS and have minimal performance impact
+4. **Accessibility**: Ensure text remains readable at all contrast levels
+
+## Technical Notes
+
+- Color adjustments are applied using CSS filters
+- Multiple filters can be combined
+- Filters are applied to the entire page
+- Settings persist in localStorage
+

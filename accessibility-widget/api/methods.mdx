@@ -1,0 +1,292 @@
+---
+title: "Methods Reference"
+description: "Complete reference of all API methods"
+---
+
+## Methods Reference
+
+Complete documentation of all available API methods.
+
+## AccessibilityWidget Methods
+
+### `init()`
+
+Initialize the accessibility widget.
+
+```javascript
+AccessibilityWidget.init()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+AccessibilityWidget.init();
+```
+
+**Notes:**
+- Called automatically when script loads
+- Safe to call multiple times (will warn if already initialized)
+- Throws error if initialization fails
+
+---
+
+### `open()`
+
+Open the widget panel.
+
+```javascript
+AccessibilityWidget.open()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+// Open widget on button click
+document.getElementById('open-a11y').addEventListener('click', () => {
+  AccessibilityWidget.open();
+});
+```
+
+**Notes:**
+- Adds `clv-a11y-open` class to widget
+- Triggers `a11y-widget-open` event
+- No effect if widget not initialized
+
+---
+
+### `close()`
+
+Close the widget panel.
+
+```javascript
+AccessibilityWidget.close()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+// Close widget programmatically
+AccessibilityWidget.close();
+```
+
+**Notes:**
+- Removes `clv-a11y-open` class from widget
+- Triggers `a11y-widget-close` event
+- No effect if widget not initialized
+
+---
+
+### `toggle()`
+
+Toggle the widget open/closed state.
+
+```javascript
+AccessibilityWidget.toggle()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+// Toggle with keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'a') {
+    e.preventDefault();
+    AccessibilityWidget.toggle();
+  }
+});
+```
+
+**Notes:**
+- Calls `open()` or `close()` based on current state
+- Triggers appropriate event
+
+---
+
+### `isInitialized()`
+
+Check if the widget has been initialized.
+
+```javascript
+AccessibilityWidget.isInitialized()
+```
+
+**Returns:** `boolean` - `true` if initialized, `false` otherwise
+
+**Example:**
+```javascript
+if (AccessibilityWidget.isInitialized()) {
+  AccessibilityWidget.open();
+} else {
+  console.log('Widget not ready');
+}
+```
+
+---
+
+### `reset()`
+
+Reset the widget state and clear user preferences.
+
+```javascript
+AccessibilityWidget.reset()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+// Reset widget
+AccessibilityWidget.reset();
+// Reinitialize
+AccessibilityWidget.init();
+```
+
+**Notes:**
+- Clears initialization flag
+- Does not clear localStorage preferences
+- Use before reinitializing with new config
+
+---
+
+## WidgetInitializer Methods
+
+### `init(config)`
+
+Initialize the widget with configuration.
+
+```javascript
+WidgetInitializer.init(config)
+```
+
+**Parameters:**
+- `config` (AccessibilityConfig): Configuration object
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```javascript
+import { WidgetInitializer } from 'accessibility-widget';
+import { pluginConfig } from 'accessibility-widget/config';
+
+await WidgetInitializer.init(pluginConfig);
+```
+
+**Notes:**
+- Async function (loads languages)
+- Renders widget HTML
+- Initializes features
+- Can be called multiple times (destroys previous instance)
+
+---
+
+### `getWidget()`
+
+Get the initialized widget instance.
+
+```javascript
+WidgetInitializer.getWidget()
+```
+
+**Returns:** `AccessibilityWidget | null`
+
+**Example:**
+```javascript
+const widget = WidgetInitializer.getWidget();
+if (widget) {
+  widget.open();
+}
+```
+
+---
+
+### `getContainer()`
+
+Get the widget container element.
+
+```javascript
+WidgetInitializer.getContainer()
+```
+
+**Returns:** `HTMLElement | null`
+
+**Example:**
+```javascript
+const container = WidgetInitializer.getContainer();
+if (container) {
+  container.style.zIndex = '10000';
+}
+```
+
+---
+
+### `destroy()`
+
+Destroy the widget instance.
+
+```javascript
+WidgetInitializer.destroy()
+```
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+// Destroy and recreate with new config
+WidgetInitializer.destroy();
+WidgetInitializer.init(newConfig);
+```
+
+**Notes:**
+- Resets widget state
+- Clears container HTML
+- Does not remove container from DOM
+
+---
+
+## Error Handling
+
+All methods handle errors gracefully:
+
+```javascript
+try {
+  AccessibilityWidget.init();
+} catch (error) {
+  console.error('Failed to initialize widget:', error);
+}
+```
+
+## Method Chaining
+
+Some methods can be chained:
+
+```javascript
+// Not directly chainable, but can be used in sequence
+if (AccessibilityWidget.isInitialized()) {
+  AccessibilityWidget.open();
+}
+```
+
+## Async Operations
+
+`WidgetInitializer.init()` is async:
+
+```javascript
+try {
+  await WidgetInitializer.init(config);
+  console.log('Widget initialized');
+} catch (error) {
+  console.error('Initialization failed:', error);
+}
+```
+
+## Best Practices
+
+1. **Check Initialization**: Always check if widget is initialized before calling methods
+2. **Error Handling**: Wrap API calls in try-catch blocks
+3. **Async Handling**: Use await or .then() for async operations
+4. **Event Listeners**: Listen to events for widget state changes
+

@@ -1,0 +1,303 @@
+---
+title: "Configuration"
+description: "Complete configuration reference for the Accessibility Widget"
+---
+
+## Configuration Overview
+
+The Accessibility Widget is highly configurable. All settings are passed through the `window._clvA11yConfig` object before the widget script loads.
+
+## Configuration Object
+
+```typescript
+interface AccessibilityConfig {
+  iconId: string;
+  iconSize: number;
+  language: string;
+  theme: ThemeConfig;
+  position: PositionConfig;
+  margins: MarginsConfig;
+  modules: ModulesConfig;
+  profiles: ProfilesConfig;
+}
+```
+
+## Basic Configuration
+
+### Icon Settings
+
+```javascript
+{
+  iconId: "accessibility",  // Icon identifier
+  iconSize: 48              // Icon size in pixels
+}
+```
+
+**Available Icons:**
+- `"default"` - Default icon
+- `"accessibility"` - Accessibility symbol
+- `"assist"` - Assist icon
+- `"wheel"` - Settings wheel icon
+
+### Language
+
+```javascript
+{
+  language: "en"  // Language code (ISO 639-1)
+}
+```
+
+**Supported Languages:**
+English (en), German (de), Spanish (es), French (fr), Italian (it), Polish (pl), Swedish (se), Finnish (fi), Portuguese (pt), Romanian (ro), Slovenian (si), Slovak (sk), Dutch (nl), Danish (dk), Greek (gr), Czech (cz), Hungarian (hu), Lithuanian (lt), Latvian (lv), Estonian (ee), Croatian (hr), Irish (ie), Bulgarian (bg), Norwegian (no), Turkish (tr), Indonesian (id), Portuguese Brazil (pt-br), Japanese (ja), Korean (ko), Chinese (zh), Arabic (ar), Russian (ru), Hindi (hi), Ukrainian (uk), Serbian (sr)
+
+## Position Configuration
+
+Control where the widget appears on screen:
+
+```javascript
+{
+  position: {
+    mobile: "bottom-right",   // Mobile position
+    desktop: "bottom-right"   // Desktop position
+  }
+}
+```
+
+**Available Positions:**
+- `"top-left"`
+- `"top-right"`
+- `"bottom-left"`
+- `"bottom-right"`
+
+## Margins Configuration
+
+Set spacing from screen edges:
+
+```javascript
+{
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    }
+  }
+}
+```
+
+## Theme Configuration
+
+Customize widget colors:
+
+```javascript
+{
+  theme: {
+    primaryColor: "#1a1a1a",   // Primary widget color
+    textColor: "#212529"       // Text color
+  }
+}
+```
+
+## Modules Configuration
+
+Enable or disable specific feature modules:
+
+### Color Modules
+
+```javascript
+modules: {
+  color: {
+    brightness: { enabled: true },
+    invertColors: { enabled: true },
+    contrast: { enabled: true },
+    grayScale: { enabled: true },
+    saturation: { enabled: true }
+  }
+}
+```
+
+### Content Modules
+
+```javascript
+modules: {
+  content: {
+    biggerText: { enabled: true },
+    cursor: { enabled: true },
+    dyslexicFont: { enabled: true },
+    letterSpacing: { enabled: true },
+    lineHeight: { enabled: true },
+    readableFont: { enabled: true },
+    alignText: { enabled: true },
+    textMagnifier: { enabled: true },
+    highlightLinks: { enabled: true }
+  }
+}
+```
+
+### Orientation Modules
+
+```javascript
+modules: {
+  orientation: {
+    readingLine: { enabled: true },
+    keyboardNavigation: { enabled: true },
+    highlightTitles: { enabled: true },
+    readingMask: { enabled: true },
+    hideImages: { enabled: true },
+    highlightAll: { enabled: true },
+    readPage: { enabled: true },
+    muteSounds: { enabled: true },
+    stopAnimations: { enabled: true }
+  }
+}
+```
+
+### Accessibility Statement
+
+```javascript
+modules: {
+  statement: {
+    enabled: false,        // Show accessibility statement link
+    url: ""                // URL to accessibility statement page
+  }
+}
+```
+
+## Profiles Configuration
+
+Enable or disable accessibility profiles:
+
+```javascript
+profiles: {
+  visionImpaired: { enabled: true },
+  seizureSafe: { enabled: true },
+  adhdFriendly: { enabled: true },
+  blindness: { enabled: true },
+  epilepsySafe: { enabled: true }
+}
+```
+
+## Complete Configuration Example
+
+```javascript
+window._clvA11yConfig = {
+  // Icon
+  iconId: "accessibility",
+  iconSize: 48,
+  
+  // Language
+  language: "en",
+  
+  // Position
+  position: {
+    mobile: "bottom-right",
+    desktop: "bottom-right"
+  },
+  
+  // Margins
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    }
+  },
+  
+  // Theme
+  theme: {
+    primaryColor: "#1a1a1a",
+    textColor: "#212529"
+  },
+  
+  // Modules
+  modules: {
+    color: {
+      brightness: { enabled: true },
+      invertColors: { enabled: true },
+      contrast: { enabled: true },
+      grayScale: { enabled: true },
+      saturation: { enabled: true }
+    },
+    content: {
+      biggerText: { enabled: true },
+      cursor: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      readableFont: { enabled: true },
+      alignText: { enabled: true },
+      textMagnifier: { enabled: true },
+      highlightLinks: { enabled: true }
+    },
+    orientation: {
+      readingLine: { enabled: true },
+      keyboardNavigation: { enabled: true },
+      highlightTitles: { enabled: true },
+      readingMask: { enabled: true },
+      hideImages: { enabled: true },
+      highlightAll: { enabled: true },
+      readPage: { enabled: true },
+      muteSounds: { enabled: true },
+      stopAnimations: { enabled: true }
+    },
+    statement: {
+      enabled: false,
+      url: ""
+    }
+  },
+  
+  // Profiles
+  profiles: {
+    visionImpaired: { enabled: true },
+    seizureSafe: { enabled: true },
+    adhdFriendly: { enabled: true },
+    blindness: { enabled: true },
+    epilepsySafe: { enabled: true }
+  }
+};
+```
+
+## Default Configuration
+
+If no configuration is provided, the widget uses these defaults:
+
+```javascript
+{
+  iconId: "accessibility",
+  iconSize: 48,
+  language: "en",
+  position: {
+    mobile: "bottom-right",
+    desktop: "bottom-right"
+  },
+  margins: {
+    desktop: { top: 20, bottom: 20, left: 20, right: 20 },
+    mobile: { top: 20, bottom: 20, left: 20, right: 20 }
+  },
+  theme: {
+    primaryColor: "#1a1a1a",
+    textColor: "#212529"
+  },
+  // All modules enabled by default
+  // All profiles enabled except visionImpaired, seizureSafe, blindness, epilepsySafe
+}
+```
+
+<Info>
+  Configuration must be set before the widget script loads. Use `window._clvA11yConfig` to pass your configuration.
+</Info>
+

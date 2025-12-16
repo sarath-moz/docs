@@ -1,0 +1,267 @@
+---
+title: "Shopify Integration"
+description: "Integrate the Accessibility Widget into your Shopify store"
+---
+
+## Shopify Integration
+
+The Accessibility Widget can be easily integrated into Shopify stores using Liquid templates.
+
+## Installation
+
+### Method 1: Shopify App Block (Recommended)
+
+Add the widget as an app block in your theme:
+
+1. Go to **Online Store** > **Themes**
+2. Click **Customize** on your active theme
+3. Add the **Accessibility Widget** block
+4. Configure settings in the block settings panel
+
+### Method 2: Liquid Template
+
+Add the widget to your theme's `theme.liquid` file:
+
+```liquid
+{% render 'accessibility-widget' %}
+```
+
+Or add it directly in the body section:
+
+```liquid
+<body>
+  <!-- Your content -->
+  
+  {% render 'accessibility-widget' %}
+</body>
+```
+
+## Configuration via Metafields
+
+The widget reads configuration from Shopify app metafields. Set these in your Shopify admin:
+
+### Setting Configuration
+
+```liquid
+{% assign app_data = app.metafields.widget.settings %}
+{% if app_data %}
+  <script>
+    window._clvA11yConfig = {{ app_data }};
+  </script>
+{% endif %}
+```
+
+### Default Configuration
+
+If metafields are not set, use a fallback configuration:
+
+```liquid
+<script>
+  window._clvA11yConfig = {
+    iconId: "accessibility",
+    iconSize: 48,
+    language: "{{ localization.language.iso_code }}",
+    position: {
+      mobile: "bottom-right",
+      desktop: "bottom-right"
+    },
+    theme: {
+      primaryColor: "{{ settings.color_primary }}",
+      textColor: "{{ settings.color_text }}"
+    },
+    modules: {
+      color: {
+        brightness: { enabled: true },
+        invertColors: { enabled: true },
+        contrast: { enabled: true },
+        grayScale: { enabled: true },
+        saturation: { enabled: true }
+      },
+      content: {
+        biggerText: { enabled: true },
+        cursor: { enabled: true },
+        dyslexicFont: { enabled: true },
+        letterSpacing: { enabled: true },
+        lineHeight: { enabled: true },
+        readableFont: { enabled: true },
+        alignText: { enabled: true },
+        textMagnifier: { enabled: true },
+        highlightLinks: { enabled: true }
+      },
+      orientation: {
+        readingLine: { enabled: true },
+        keyboardNavigation: { enabled: true },
+        highlightTitles: { enabled: true },
+        readingMask: { enabled: true },
+        hideImages: { enabled: true },
+        highlightAll: { enabled: true },
+        readPage: { enabled: true },
+        muteSounds: { enabled: true },
+        stopAnimations: { enabled: true }
+      }
+    },
+    profiles: {
+      visionImpaired: { enabled: true },
+      seizureSafe: { enabled: true },
+      adhdFriendly: { enabled: true },
+      blindness: { enabled: true },
+      epilepsySafe: { enabled: true }
+    }
+  };
+</script>
+```
+
+## Language Detection
+
+Automatically detect the store's language:
+
+```liquid
+<script>
+  window._clvA11yConfig = {
+    language: "{{ localization.language.iso_code }}",
+    // ... other config
+  };
+</script>
+```
+
+## Theme Integration
+
+Match widget colors to your theme:
+
+```liquid
+<script>
+  window._clvA11yConfig = {
+    theme: {
+      primaryColor: "{{ settings.color_primary }}",
+      textColor: "{{ settings.color_text }}"
+    },
+    // ... other config
+  };
+</script>
+```
+
+## Complete Example
+
+Here's a complete example for `theme.liquid`:
+
+```liquid
+<!DOCTYPE html>
+<html lang="{{ localization.language.iso_code }}">
+<head>
+  <!-- Head content -->
+</head>
+<body>
+  <!-- Your theme content -->
+  
+  <!-- Accessibility Widget Configuration -->
+  {% assign app_data = app.metafields.widget.settings %}
+  {% if app_data %}
+    <script>
+      window._clvA11yConfig = {{ app_data }};
+    </script>
+  {% else %}
+    <script>
+      window._clvA11yConfig = {
+        iconId: "accessibility",
+        iconSize: 48,
+        language: "{{ localization.language.iso_code }}",
+        position: {
+          mobile: "bottom-right",
+          desktop: "bottom-right"
+        },
+        theme: {
+          primaryColor: "{{ settings.color_primary | default: '#1a1a1a' }}",
+          textColor: "{{ settings.color_text | default: '#212529' }}"
+        }
+      };
+    </script>
+  {% endif %}
+  
+  <!-- Widget Script -->
+  <script src="{{ 'widget.min.js' | asset_url }}" defer></script>
+</body>
+</html>
+```
+
+## App Block Schema
+
+If creating a custom app block, use this schema:
+
+```json
+{
+  "name": "Accessibility Widget",
+  "target": "body",
+  "javascript": "widget.min.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "icon_id",
+      "label": "Icon ID",
+      "default": "accessibility"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon Size",
+      "min": 24,
+      "max": 96,
+      "step": 4,
+      "default": 48
+    },
+    {
+      "type": "select",
+      "id": "language",
+      "label": "Language",
+      "options": [
+        { "value": "en", "label": "English" },
+        { "value": "fr", "label": "French" },
+        { "value": "de", "label": "German" }
+      ],
+      "default": "en"
+    }
+  ]
+}
+```
+
+## Testing
+
+1. **Preview Mode**: Test in theme customizer preview
+2. **Live Store**: Test on a development store first
+3. **Mobile**: Verify mobile positioning and functionality
+4. **Languages**: Test with different store languages
+
+## Troubleshooting
+
+### Widget Not Appearing
+
+- Check that the script is loaded
+- Verify configuration is set before script loads
+- Check browser console for errors
+
+### Configuration Not Working
+
+- Ensure metafields are properly set
+- Check JSON syntax in metafield values
+- Verify script loads after configuration
+
+### Language Issues
+
+- Ensure language code matches supported languages
+- Check that translations are loaded
+- Verify `localization.language.iso_code` is available
+
+## Best Practices
+
+1. **Metafields**: Use app metafields for easy configuration management
+2. **Theme Colors**: Match widget colors to your theme
+3. **Language**: Auto-detect store language
+4. **Performance**: Load widget script with `defer` attribute
+5. **Testing**: Test on multiple devices and browsers
+
+## Support
+
+For Shopify-specific issues:
+- Check Shopify theme documentation
+- Review Liquid template syntax
+- Test in theme customizer
+

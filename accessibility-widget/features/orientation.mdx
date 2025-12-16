@@ -1,0 +1,213 @@
+---
+title: "Orientation Features"
+description: "Navigation and reading aids for better orientation and focus"
+---
+
+## Orientation Features
+
+Orientation features help users navigate, focus, and interact with your website more effectively.
+
+## Reading Aids
+
+### Reading Line
+
+Highlights the current line being read, helping users track their position on the page.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    readingLine: { enabled: true }
+  }
+}
+```
+
+### Reading Mask
+
+Creates a focused reading area by dimming content outside a specific region, helping users concentrate on specific content.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    readingMask: { enabled: true }
+  }
+}
+```
+
+## Navigation Features
+
+### Keyboard Navigation
+
+Enhances keyboard navigation support, making it easier to navigate the website using only the keyboard.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    keyboardNavigation: { enabled: true }
+  }
+}
+```
+
+### Highlight Titles
+
+Makes headings and titles more visible by highlighting them, improving document structure visibility.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    highlightTitles: { enabled: true }
+  }
+}
+```
+
+### Highlight All
+
+Highlights all important elements (headings, links, buttons) to make them more visible.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    highlightAll: { enabled: true }
+  }
+}
+```
+
+## Content Control Features
+
+### Hide Images
+
+Hides all images on the page, which can help with:
+- Faster page loading
+- Reduced visual distractions
+- Focus on text content
+- Reduced data usage
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    hideImages: { enabled: true }
+  }
+}
+```
+
+### Stop Animations
+
+Pauses all animations and transitions on the page, which is important for users sensitive to motion.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    stopAnimations: { enabled: true }
+  }
+}
+```
+
+### Mute Sounds
+
+Disables all audio on the page, useful for users who prefer silent browsing or are sensitive to sound.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    muteSounds: { enabled: true }
+  }
+}
+```
+
+## Text-to-Speech
+
+### Read Page
+
+Provides text-to-speech functionality, reading the page content aloud. Essential for users with visual impairments.
+
+**Enable:**
+```javascript
+modules: {
+  orientation: {
+    readPage: { enabled: true }
+  }
+}
+```
+
+## Complete Orientation Configuration
+
+```javascript
+window._clvA11yConfig = {
+  modules: {
+    orientation: {
+      readingLine: { enabled: true },
+      keyboardNavigation: { enabled: true },
+      highlightTitles: { enabled: true },
+      readingMask: { enabled: true },
+      hideImages: { enabled: true },
+      highlightAll: { enabled: true },
+      readPage: { enabled: true },
+      muteSounds: { enabled: true },
+      stopAnimations: { enabled: true }
+    }
+  }
+};
+```
+
+## Feature Combinations
+
+### Focus Mode
+- **Reading Line** + **Reading Mask**: Maximum focus on current content
+- **Stop Animations** + **Hide Images**: Minimal distractions
+
+### Navigation Mode
+- **Keyboard Navigation** + **Highlight Titles**: Enhanced structure visibility
+- **Highlight All** + **Highlight Titles**: Complete element highlighting
+
+### Minimal Mode
+- **Hide Images** + **Stop Animations** + **Mute Sounds**: Minimal sensory input
+
+### Screen Reader Support
+- **Keyboard Navigation** + **Read Page** + **Highlight Titles**: Full screen reader compatibility
+
+## Use Cases
+
+### ADHD/Focus Issues
+- Reading Line
+- Reading Mask
+- Stop Animations
+- Hide Images
+
+### Visual Impairments
+- Keyboard Navigation
+- Read Page
+- Highlight Titles
+- Highlight All
+
+### Motion Sensitivity
+- Stop Animations
+- Reading Line (static focus)
+
+### Cognitive Load Reduction
+- Hide Images
+- Stop Animations
+- Mute Sounds
+- Reading Mask
+
+## Best Practices
+
+1. **Essential Features**: Always enable `keyboardNavigation` for accessibility compliance
+2. **Motion Sensitivity**: Enable `stopAnimations` to respect user preferences
+3. **Screen Readers**: Enable `readPage` for text-to-speech support
+4. **Performance**: Features like `hideImages` can improve page performance
+
+## Technical Notes
+
+- **Reading Line**: Uses CSS to highlight the current line
+- **Reading Mask**: Creates an overlay with a transparent reading area
+- **Keyboard Navigation**: Enhances focus management and keyboard event handling
+- **Stop Animations**: Uses CSS `prefers-reduced-motion` and disables animations
+- **Read Page**: Uses Web Speech API for text-to-speech
+

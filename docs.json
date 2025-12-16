@@ -8,66 +8,83 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
-          }
-        ]
-      }
-    ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "accessibility-widget/introduction",
+        "accessibility-widget/installation",
+        "accessibility-widget/quickstart"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "accessibility-widget/configuration",
+        "accessibility-widget/theming",
+        "accessibility-widget/positioning"
+      ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "accessibility-widget/features/overview",
+        "accessibility-widget/features/profiles",
+        "accessibility-widget/features/content",
+        "accessibility-widget/features/color",
+        "accessibility-widget/features/orientation"
+      ]
+    },
+    {
+      "group": "Integration",
+      "pages": [
+        "accessibility-widget/integration/shopify",
+        "accessibility-widget/integration/wordpress",
+        "accessibility-widget/integration/custom"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "accessibility-widget/api/overview",
+        "accessibility-widget/api/configuration",
+        "accessibility-widget/api/methods",
+        "accessibility-widget/api/events"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "index",
+        "quickstart",
+        "development"
+      ]
+    },
+    {
+      "group": "Customization",
+      "pages": [
+        "essentials/settings",
+        "essentials/navigation"
+      ]
+    },
+    {
+      "group": "Writing content",
+      "pages": [
+        "essentials/markdown",
+        "essentials/code",
+        "essentials/images",
+        "essentials/reusable-snippets"
+      ]
+    },
+    {
+      "group": "AI tools",
+      "pages": [
+        "ai-tools/cursor",
+        "ai-tools/claude-code",
+        "ai-tools/windsurf"
+      ]
+    }
+  ],
     "global": {
       "anchors": [
         {

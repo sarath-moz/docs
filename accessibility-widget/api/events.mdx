@@ -1,0 +1,282 @@
+---
+title: "Events"
+description: "Event system for the Accessibility Widget"
+---
+
+## Events
+
+The Accessibility Widget dispatches custom events that you can listen to for integration and customization.
+
+## Available Events
+
+### `a11y-widget-open`
+
+Dispatched when the widget panel is opened.
+
+```javascript
+document.addEventListener('a11y-widget-open', (event) => {
+  console.log('Widget opened');
+  // Your code here
+});
+```
+
+**Event Details:**
+- **Type:** `CustomEvent`
+- **Bubbles:** `true`
+- **Cancelable:** `false`
+
+---
+
+### `a11y-widget-close`
+
+Dispatched when the widget panel is closed.
+
+```javascript
+document.addEventListener('a11y-widget-close', (event) => {
+  console.log('Widget closed');
+  // Your code here
+});
+```
+
+**Event Details:**
+- **Type:** `CustomEvent`
+- **Bubbles:** `true`
+- **Cancelable:** `false`
+
+---
+
+### `a11y-feature-change`
+
+Dispatched when a feature is enabled, disabled, or its level is changed.
+
+```javascript
+document.addEventListener('a11y-feature-change', (event) => {
+  console.log('Feature changed:', event.detail);
+  // event.detail contains:
+  // {
+  //   featureId: string,
+  //   enabled: boolean,
+  //   level?: number
+  // }
+});
+```
+
+**Event Details:**
+- **Type:** `CustomEvent`
+- **Bubbles:** `true`
+- **Cancelable:** `false`
+- **Detail:**
+  ```typescript
+  {
+    featureId: string;
+    enabled: boolean;
+    level?: number;
+  }
+  ```
+
+---
+
+### `a11y-profile-activate`
+
+Dispatched when an accessibility profile is activated.
+
+```javascript
+document.addEventListener('a11y-profile-activate', (event) => {
+  console.log('Profile activated:', event.detail);
+  // event.detail contains:
+  // {
+  //   profileId: string
+  // }
+});
+```
+
+**Event Details:**
+- **Type:** `CustomEvent`
+- **Bubbles:** `true`
+- **Cancelable:** `false`
+- **Detail:**
+  ```typescript
+  {
+    profileId: string;
+  }
+  ```
+
+---
+
+### `a11y-settings-reset`
+
+Dispatched when user resets all settings.
+
+```javascript
+document.addEventListener('a11y-settings-reset', (event) => {
+  console.log('Settings reset');
+  // Your code here
+});
+```
+
+**Event Details:**
+- **Type:** `CustomEvent`
+- **Bubbles:** `true`
+- **Cancelable:** `false`
+
+---
+
+## Usage Examples
+
+### Track Widget Usage
+
+```javascript
+let widgetOpenCount = 0;
+
+document.addEventListener('a11y-widget-open', () => {
+  widgetOpenCount++;
+  console.log(`Widget opened ${widgetOpenCount} times`);
+  
+  // Send analytics
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'a11y_widget_open', {
+      'event_category': 'accessibility',
+      'value': widgetOpenCount
+    });
+  }
+});
+```
+
+### React to Feature Changes
+
+```javascript
+document.addEventListener('a11y-feature-change', (event) => {
+  const { featureId, enabled, level } = event.detail;
+  
+  // Update UI based on feature
+  if (featureId === 'biggerText' && enabled) {
+    console.log(`Text size increased to level ${level}`);
+    // Adjust your layout if needed
+  }
+  
+  if (featureId === 'stopAnimations' && enabled) {
+    console.log('Animations stopped');
+    // Disable your custom animations
+  }
+});
+```
+
+### Profile Activation Tracking
+
+```javascript
+document.addEventListener('a11y-profile-activate', (event) => {
+  const { profileId } = event.detail;
+  
+  console.log(`User activated profile: ${profileId}`);
+  
+  // Track which profiles are most used
+  trackProfileUsage(profileId);
+});
+```
+
+### Settings Reset Handler
+
+```javascript
+document.addEventListener('a11y-settings-reset', () => {
+  console.log('User reset all accessibility settings');
+  
+  // Reset any custom accessibility features you've added
+  resetCustomAccessibilityFeatures();
+});
+```
+
+## Event Listener Best Practices
+
+### Remove Event Listeners
+
+```javascript
+const handleWidgetOpen = () => {
+  console.log('Widget opened');
+};
+
+// Add listener
+document.addEventListener('a11y-widget-open', handleWidgetOpen);
+
+// Remove listener when done
+document.removeEventListener('a11y-widget-open', handleWidgetOpen);
+```
+
+### Use Once Option
+
+```javascript
+// Listen only once
+document.addEventListener('a11y-widget-open', () => {
+  console.log('Widget opened for the first time');
+}, { once: true });
+```
+
+### Event Delegation
+
+```javascript
+// Listen on document for all a11y events
+document.addEventListener('a11y-feature-change', (event) => {
+  // Handle all feature changes
+  handleFeatureChange(event.detail);
+});
+```
+
+## React Integration
+
+```jsx
+import { useEffect } from 'react';
+
+function AccessibilityWidgetListener() {
+  useEffect(() => {
+    const handleWidgetOpen = () => {
+      console.log('Widget opened');
+    };
+    
+    document.addEventListener('a11y-widget-open', handleWidgetOpen);
+    
+    return () => {
+      document.removeEventListener('a11y-widget-open', handleWidgetOpen);
+    };
+  }, []);
+  
+  return null;
+}
+```
+
+## Vue Integration
+
+```vue
+<script>
+export default {
+  mounted() {
+    document.addEventListener('a11y-widget-open', this.handleWidgetOpen);
+  },
+  beforeUnmount() {
+    document.removeEventListener('a11y-widget-open', this.handleWidgetOpen);
+  },
+  methods: {
+    handleWidgetOpen() {
+      console.log('Widget opened');
+    }
+  }
+}
+</script>
+```
+
+## Event Order
+
+Events are dispatched in this order:
+
+1. `a11y-widget-open` - When widget opens
+2. `a11y-feature-change` - When features change
+3. `a11y-profile-activate` - When profiles activate
+4. `a11y-settings-reset` - When settings reset
+5. `a11y-widget-close` - When widget closes
+
+## Browser Compatibility
+
+All events use the standard `CustomEvent` API, supported in:
+- Chrome 15+
+- Firefox 11+
+- Safari 6+
+- Edge 12+
+

@@ -1,0 +1,130 @@
+---
+title: "Installation"
+description: "Install the WebYes Accessibility Widget on your website"
+---
+
+## Installation Methods
+
+The Accessibility Widget can be installed in several ways depending on your platform and needs.
+
+## Method 1: NPM Package (Recommended)
+
+Install the widget as an npm package for maximum flexibility:
+
+```bash
+npm install accessibility-widget
+```
+
+Then import and initialize in your JavaScript:
+
+```javascript
+import { WidgetInitializer } from 'accessibility-widget';
+import { pluginConfig } from 'accessibility-widget/config';
+
+WidgetInitializer.init(pluginConfig);
+```
+
+## Method 2: CDN (Quick Setup)
+
+Add the widget using a CDN link in your HTML:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <!-- Your content -->
+  
+  <!-- Accessibility Widget -->
+  <script>
+    window._clvA11yConfig = {
+      iconId: "accessibility",
+      iconSize: 48,
+      language: "en",
+      position: {
+        mobile: "bottom-right",
+        desktop: "bottom-right"
+      },
+      theme: {
+        primaryColor: "#1a1a1a",
+        textColor: "#212529"
+      }
+    };
+  </script>
+  <script src="https://cdn.webyes.com/widget.min.js"></script>
+</body>
+</html>
+```
+
+## Method 3: Shopify Integration
+
+For Shopify stores, use the Liquid block:
+
+```liquid
+{% render 'accessibility-widget' %}
+```
+
+The widget will automatically read configuration from your Shopify app metafields.
+
+<Info>
+  See the [Shopify Integration Guide](/accessibility-widget/integration/shopify) for detailed setup instructions.
+</Info>
+
+## Method 4: WordPress Plugin
+
+If you're using WordPress, install the OneTap Pro Accessibility Plugin:
+
+1. Upload the plugin to `/wp-content/plugins/`
+2. Activate the plugin through the WordPress admin panel
+3. Configure settings in the plugin admin page
+
+<Info>
+  See the [WordPress Integration Guide](/accessibility-widget/integration/wordpress) for more details.
+</Info>
+
+## Method 5: Custom Integration
+
+For custom implementations, include the built JavaScript file:
+
+```html
+<script src="path/to/widget.min.js"></script>
+<script>
+  // Configure before initialization
+  window._clvA11yConfig = {
+    // Your configuration
+  };
+</script>
+```
+
+The widget will automatically initialize when the script loads.
+
+## Build from Source
+
+If you want to build from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/webyes/accessibility-widget.git
+
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Build for development (with watch)
+npm run build:dev
+```
+
+The built files will be in the `dist/` directory.
+
+## Verification
+
+After installation, you should see the accessibility widget icon appear on your website. Click it to verify all features are working correctly.
+
+<Warning>
+  Make sure to include the widget script before the closing `</body>` tag for optimal performance.
+</Warning>
+

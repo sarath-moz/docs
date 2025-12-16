@@ -1,0 +1,155 @@
+---
+title: "Positioning"
+description: "Control where the Accessibility Widget appears on your website"
+---
+
+## Widget Position
+
+The Accessibility Widget can be positioned in any of the four corners of the screen, with separate settings for mobile and desktop devices.
+
+## Position Options
+
+```javascript
+window._clvA11yConfig = {
+  position: {
+    mobile: "bottom-right",   // Mobile device position
+    desktop: "bottom-right"   // Desktop device position
+  }
+};
+```
+
+## Available Positions
+
+- `"top-left"` - Top left corner
+- `"top-right"` - Top right corner
+- `"bottom-left"` - Bottom left corner
+- `"bottom-right"` - Bottom right corner (default)
+
+## Examples
+
+### Bottom Right (Default)
+
+```javascript
+position: {
+  mobile: "bottom-right",
+  desktop: "bottom-right"
+}
+```
+
+### Top Right
+
+```javascript
+position: {
+  mobile: "top-right",
+  desktop: "top-right"
+}
+```
+
+### Different Positions for Mobile and Desktop
+
+```javascript
+position: {
+  mobile: "bottom-left",    // Mobile: bottom left
+  desktop: "top-right"      // Desktop: top right
+}
+```
+
+## Margins
+
+Control the spacing from screen edges:
+
+```javascript
+margins: {
+  desktop: {
+    top: 20,
+    bottom: 20,
+    left: 20,
+    right: 20
+  },
+  mobile: {
+    top: 20,
+    bottom: 20,
+    left: 20,
+    right: 20
+  }
+}
+```
+
+### Margin Examples
+
+**Tight Margins:**
+```javascript
+margins: {
+  desktop: { top: 10, bottom: 10, left: 10, right: 10 },
+  mobile: { top: 5, bottom: 5, left: 5, right: 5 }
+}
+```
+
+**Loose Margins:**
+```javascript
+margins: {
+  desktop: { top: 40, bottom: 40, left: 40, right: 40 },
+  mobile: { top: 20, bottom: 20, left: 20, right: 20 }
+}
+```
+
+**Asymmetric Margins:**
+```javascript
+margins: {
+  desktop: {
+    top: 20,
+    bottom: 20,
+    left: 30,    // More space from left
+    right: 20
+  },
+  mobile: {
+    top: 15,
+    bottom: 15,
+    left: 15,
+    right: 15
+  }
+}
+```
+
+## Complete Positioning Example
+
+```javascript
+window._clvA11yConfig = {
+  position: {
+    mobile: "bottom-left",
+    desktop: "top-right"
+  },
+  margins: {
+    desktop: {
+      top: 30,
+      bottom: 20,
+      left: 20,
+      right: 30
+    },
+    mobile: {
+      top: 15,
+      bottom: 15,
+      left: 15,
+      right: 15
+    }
+  }
+};
+```
+
+## Best Practices
+
+1. **Avoid Content Overlap**: Position the widget where it won't cover important content
+2. **Mobile Considerations**: Use larger margins on mobile for easier tapping
+3. **Consistency**: Keep the same position across pages for better UX
+4. **Accessibility**: Ensure the widget is always accessible and not hidden
+
+## Z-Index
+
+The widget uses a high z-index (typically 9999) to ensure it appears above other content. If you need to adjust this, you can override it with CSS:
+
+```css
+.clv-a11y-widget {
+  z-index: 10000; /* Adjust as needed */
+}
+```
+

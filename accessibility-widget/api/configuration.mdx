@@ -1,0 +1,276 @@
+---
+title: "Configuration API"
+description: "Programmatic configuration of the Accessibility Widget"
+---
+
+## Configuration API
+
+Configure the Accessibility Widget programmatically before initialization.
+
+## Setting Configuration
+
+Configuration must be set before the widget script loads:
+
+```javascript
+// Set configuration
+window._clvA11yConfig = {
+  iconId: "accessibility",
+  iconSize: 48,
+  language: "en",
+  // ... other options
+};
+
+// Then load the widget script
+```
+
+## Configuration Object Reference
+
+### Basic Configuration
+
+```typescript
+interface AccessibilityConfig {
+  iconId: string;
+  iconSize: number;
+  language: string;
+  theme: ThemeConfig;
+  position: PositionConfig;
+  margins: MarginsConfig;
+  modules: ModulesConfig;
+  profiles: ProfilesConfig;
+}
+```
+
+### Theme Configuration
+
+```typescript
+interface ThemeConfig {
+  primaryColor: string;
+  textColor: string;
+}
+```
+
+### Position Configuration
+
+```typescript
+interface PositionConfig {
+  mobile: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  desktop: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+}
+```
+
+### Margins Configuration
+
+```typescript
+interface MarginsConfig {
+  desktop: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+  mobile: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+}
+```
+
+### Modules Configuration
+
+```typescript
+interface ModulesConfig {
+  color: {
+    brightness?: ModuleState;
+    invertColors?: ModuleState;
+    contrast?: ModuleState;
+    grayScale?: ModuleState;
+    saturation?: ModuleState;
+  };
+  content: {
+    biggerText?: ModuleState;
+    cursor?: ModuleState;
+    dyslexicFont?: ModuleState;
+    letterSpacing?: ModuleState;
+    lineHeight?: ModuleState;
+    readableFont?: ModuleState;
+    alignText?: ModuleState;
+    textMagnifier?: ModuleState;
+    highlightLinks?: ModuleState;
+  };
+  orientation: {
+    readingLine?: ModuleState;
+    keyboardNavigation?: ModuleState;
+    highlightTitles?: ModuleState;
+    readingMask?: ModuleState;
+    hideImages?: ModuleState;
+    highlightAll?: ModuleState;
+    readPage?: ModuleState;
+    muteSounds?: ModuleState;
+    stopAnimations?: ModuleState;
+  };
+  statement: {
+    enabled: boolean;
+    url: string;
+  };
+}
+```
+
+### Profiles Configuration
+
+```typescript
+interface ProfilesConfig {
+  visionImpaired?: ProfileState;
+  seizureSafe?: ProfileState;
+  adhdFriendly?: ProfileState;
+  blindness?: ProfileState;
+  epilepsySafe?: ProfileState;
+}
+```
+
+### Module State
+
+```typescript
+interface ModuleState {
+  enabled: boolean;
+}
+```
+
+### Profile State
+
+```typescript
+interface ProfileState {
+  enabled: boolean;
+}
+```
+
+## Dynamic Configuration
+
+You can update configuration dynamically, but changes won't take effect until the widget is reinitialized:
+
+```javascript
+// Update config
+window._clvA11yConfig = {
+  ...window._clvA11yConfig,
+  language: 'fr'
+};
+
+// Reinitialize widget (if using WidgetInitializer)
+WidgetInitializer.destroy();
+WidgetInitializer.init(window._clvA11yConfig);
+```
+
+## Merging with Defaults
+
+The widget automatically merges your configuration with defaults:
+
+```javascript
+// Your config
+window._clvA11yConfig = {
+  language: 'fr',
+  iconSize: 64
+};
+
+// Widget merges with defaults:
+// - language: 'fr' (your value)
+// - iconSize: 64 (your value)
+// - iconId: 'accessibility' (default)
+// - All other defaults applied
+```
+
+## Configuration Validation
+
+The widget validates configuration and falls back to defaults for invalid values:
+
+```javascript
+// Invalid position will use default
+window._clvA11yConfig = {
+  position: {
+    mobile: "invalid",  // Will use "bottom-right"
+    desktop: "bottom-right"
+  }
+};
+```
+
+## Best Practices
+
+1. **Set Before Load**: Always set configuration before the widget script loads
+2. **Validate Values**: Ensure configuration values are valid
+3. **Use TypeScript**: Use TypeScript for type safety
+4. **Document Config**: Document your configuration for your team
+
+## Example: Complete Configuration
+
+```javascript
+window._clvA11yConfig = {
+  iconId: "accessibility",
+  iconSize: 48,
+  language: "en",
+  position: {
+    mobile: "bottom-right",
+    desktop: "bottom-right"
+  },
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    }
+  },
+  theme: {
+    primaryColor: "#1a1a1a",
+    textColor: "#212529"
+  },
+  modules: {
+    color: {
+      brightness: { enabled: true },
+      invertColors: { enabled: true },
+      contrast: { enabled: true },
+      grayScale: { enabled: true },
+      saturation: { enabled: true }
+    },
+    content: {
+      biggerText: { enabled: true },
+      cursor: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      readableFont: { enabled: true },
+      alignText: { enabled: true },
+      textMagnifier: { enabled: true },
+      highlightLinks: { enabled: true }
+    },
+    orientation: {
+      readingLine: { enabled: true },
+      keyboardNavigation: { enabled: true },
+      highlightTitles: { enabled: true },
+      readingMask: { enabled: true },
+      hideImages: { enabled: true },
+      highlightAll: { enabled: true },
+      readPage: { enabled: true },
+      muteSounds: { enabled: true },
+      stopAnimations: { enabled: true }
+    },
+    statement: {
+      enabled: false,
+      url: ""
+    }
+  },
+  profiles: {
+    visionImpaired: { enabled: true },
+    seizureSafe: { enabled: true },
+    adhdFriendly: { enabled: true },
+    blindness: { enabled: true },
+    epilepsySafe: { enabled: true }
+  }
+};
+```
+

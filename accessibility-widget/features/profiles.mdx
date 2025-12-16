@@ -1,0 +1,146 @@
+---
+title: "Accessibility Profiles"
+description: "Pre-configured accessibility profiles for different needs"
+---
+
+## Accessibility Profiles
+
+Profiles are pre-configured sets of features that activate multiple accessibility options at once, making it easier for users to quickly apply the settings they need.
+
+## Available Profiles
+
+### Vision Impaired Mode
+
+Optimizes text readability and visual clarity for users with vision impairments.
+
+**Activates:**
+- Bigger Text (Level 1)
+- Readable Font
+- Saturation (Level 1)
+
+**Enable:**
+```javascript
+profiles: {
+  visionImpaired: { enabled: true }
+}
+```
+
+### Seizure Safe Profile
+
+Reduces motion and flashing content to prevent seizures.
+
+**Activates:**
+- Stop Animations
+- Mute Sounds
+- Hide Images
+
+**Enable:**
+```javascript
+profiles: {
+  seizureSafe: { enabled: true }
+}
+```
+
+### ADHD Friendly Mode
+
+Reduces distractions and improves focus for users with ADHD.
+
+**Activates:**
+- Highlight Links
+- Highlight Titles
+- Reading Line
+- Keyboard Navigation
+
+**Enable:**
+```javascript
+profiles: {
+  adhdFriendly: { enabled: true }
+}
+```
+
+### Blindness Mode
+
+Enhanced screen reader support and navigation for blind users.
+
+**Activates:**
+- Keyboard Navigation
+- Highlight Links
+- Highlight Titles
+- Read Page (Text-to-Speech)
+
+**Enable:**
+```javascript
+profiles: {
+  blindness: { enabled: true }
+}
+```
+
+### Epilepsy Safe Mode
+
+Prevents seizure triggers by reducing motion and visual effects.
+
+**Activates:**
+- Stop Animations
+- Mute Sounds
+- Hide Images
+- Invert Colors (Level 1)
+
+**Enable:**
+```javascript
+profiles: {
+  epilepsySafe: { enabled: true }
+}
+```
+
+## Profile Configuration
+
+Enable or disable profiles in your configuration:
+
+```javascript
+window._clvA11yConfig = {
+  profiles: {
+    visionImpaired: { enabled: true },
+    seizureSafe: { enabled: true },
+    adhdFriendly: { enabled: true },
+    blindness: { enabled: true },
+    epilepsySafe: { enabled: true }
+  }
+};
+```
+
+## Default Profile Settings
+
+By default, only the ADHD Friendly profile is enabled:
+
+```javascript
+profiles: {
+  visionImpaired: { enabled: false },
+  seizureSafe: { enabled: false },
+  adhdFriendly: { enabled: true },
+  blindness: { enabled: false },
+  epilepsySafe: { enabled: false }
+}
+```
+
+## Profile Behavior
+
+- **One-Click Activation**: Users can activate a profile with a single click
+- **Feature Override**: Profile activation overrides individual feature settings
+- **Combination**: Users can activate multiple profiles simultaneously
+- **Reset**: Users can reset all profiles and return to default settings
+
+## Customizing Profile Features
+
+Profile configurations are defined in the widget code. To customize which features a profile activates, you would need to modify the profile configuration in the source code.
+
+<Info>
+  Profiles provide a quick way for users to apply multiple accessibility settings at once. Individual features can still be adjusted after activating a profile.
+</Info>
+
+## Best Practices
+
+1. **Enable Relevant Profiles**: Enable profiles that match your target audience
+2. **User Education**: Consider adding tooltips or descriptions explaining what each profile does
+3. **Testing**: Test each profile to ensure it works well with your website's design
+4. **Documentation**: Document which profiles are available on your accessibility statement page
+

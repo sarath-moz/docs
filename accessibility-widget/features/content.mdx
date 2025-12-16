@@ -1,0 +1,184 @@
+---
+title: "Content Features"
+description: "Text and content adjustment features for better readability"
+---
+
+## Content Features
+
+Content features help users adjust text size, spacing, fonts, and other content-related settings for better readability.
+
+## Text Size Features
+
+### Bigger Text
+
+Increase font size with three adjustable levels.
+
+**Levels:** 0 (off), 1 (small increase), 2 (medium increase), 3 (large increase)
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    biggerText: { enabled: true }
+  }
+}
+```
+
+### Text Magnifier
+
+Magnify text when hovering over it. Useful for reading small text without changing the entire page layout.
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    textMagnifier: { enabled: true }
+  }
+}
+```
+
+## Font Features
+
+### Readable Font
+
+Switch to a more readable font family optimized for legibility.
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    readableFont: { enabled: true }
+  }
+}
+```
+
+### Dyslexic Font
+
+Use OpenDyslexic font, specifically designed to help users with dyslexia read more easily.
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    dyslexicFont: { enabled: true }
+  }
+}
+```
+
+## Spacing Features
+
+### Line Height
+
+Adjust the spacing between lines of text. Higher line height improves readability.
+
+**Levels:** 0 (default), 1 (small increase), 2 (medium increase), 3 (large increase)
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    lineHeight: { enabled: true }
+  }
+}
+```
+
+### Letter Spacing
+
+Control the spacing between characters. Increased letter spacing can help with reading difficulties.
+
+**Levels:** 0 (default), 1 (small increase), 2 (medium increase), 3 (large increase)
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    letterSpacing: { enabled: true }
+  }
+}
+```
+
+## Alignment Features
+
+### Align Text
+
+Change text alignment to left, center, or right.
+
+**Levels:** 0 (default), 1 (left), 2 (center), 3 (right)
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    alignText: { enabled: true }
+  }
+}
+```
+
+## Cursor Features
+
+### Cursor
+
+Change the cursor size and style for better visibility.
+
+**Levels:** 0 (default), 1 (small increase), 2 (medium increase), 3 (large increase)
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    cursor: { enabled: true }
+  }
+}
+```
+
+## Link Features
+
+### Highlight Links
+
+Make links more visible by highlighting them with a background color or border.
+
+**Enable:**
+```javascript
+modules: {
+  content: {
+    highlightLinks: { enabled: true }
+  }
+}
+```
+
+## Complete Content Configuration
+
+```javascript
+window._clvA11yConfig = {
+  modules: {
+    content: {
+      biggerText: { enabled: true },
+      cursor: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      readableFont: { enabled: true },
+      alignText: { enabled: true },
+      textMagnifier: { enabled: true },
+      highlightLinks: { enabled: true }
+    }
+  }
+};
+```
+
+## Feature Interactions
+
+Some content features work well together:
+
+- **Bigger Text + Line Height**: Increases both size and spacing for maximum readability
+- **Dyslexic Font + Letter Spacing**: Combines dyslexia-friendly font with increased spacing
+- **Readable Font + Bigger Text**: Uses readable font at larger size
+- **Highlight Links + Bigger Text**: Makes links both larger and more visible
+
+## Best Practices
+
+1. **Enable Core Features**: At minimum, enable `biggerText` and `readableFont` for basic accessibility
+2. **Font Choice**: Consider your website's design when enabling font features
+3. **Level Testing**: Test different levels to ensure they work well with your content
+4. **Performance**: Font features may require loading additional font files
+

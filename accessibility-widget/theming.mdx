@@ -1,0 +1,139 @@
+---
+title: "Theming"
+description: "Customize the appearance of the Accessibility Widget"
+---
+
+## Theme Configuration
+
+The Accessibility Widget supports full theme customization to match your website's design.
+
+## Basic Theming
+
+Set primary and text colors:
+
+```javascript
+window._clvA11yConfig = {
+  theme: {
+    primaryColor: "#1a1a1a",   // Widget primary color
+    textColor: "#212529"       // Text color
+  }
+};
+```
+
+## Color Examples
+
+### Dark Theme
+
+```javascript
+theme: {
+  primaryColor: "#000000",
+  textColor: "#ffffff"
+}
+```
+
+### Light Theme
+
+```javascript
+theme: {
+  primaryColor: "#ffffff",
+  textColor: "#000000"
+}
+```
+
+### Brand Colors
+
+```javascript
+theme: {
+  primaryColor: "#007bff",    // Your brand primary color
+  textColor: "#212529"        // Your brand text color
+}
+```
+
+## Advanced Customization
+
+For more advanced theming, you can override CSS variables after the widget loads:
+
+```css
+.clv-a11y-widget {
+  --clv-primary-color: #your-color;
+  --clv-text-color: #your-text-color;
+  --clv-background-color: #your-bg-color;
+  --clv-border-radius: 8px;
+  --clv-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+```
+
+## Icon Customization
+
+Choose from available icons or customize the icon:
+
+```javascript
+{
+  iconId: "accessibility",  // Pre-built icons
+  iconSize: 48              // Size in pixels
+}
+```
+
+**Available Icon IDs:**
+- `"default"` - Simple default icon
+- `"accessibility"` - Standard accessibility symbol
+- `"assist"` - Assist/help icon
+- `"wheel"` - Settings wheel icon
+
+## Responsive Theming
+
+The widget automatically adapts to mobile and desktop, but you can customize margins separately:
+
+```javascript
+{
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 10,
+      bottom: 10,
+      left: 10,
+      right: 10
+    }
+  }
+}
+```
+
+## Best Practices
+
+1. **Contrast**: Ensure sufficient contrast between primary and text colors for readability
+2. **Consistency**: Match your website's color scheme
+3. **Accessibility**: Choose colors that meet WCAG contrast requirements
+4. **Visibility**: Ensure the widget is visible against your page background
+
+## Example: Complete Theme Setup
+
+```javascript
+window._clvA11yConfig = {
+  iconId: "accessibility",
+  iconSize: 48,
+  theme: {
+    primaryColor: "#0066cc",
+    textColor: "#ffffff"
+  },
+  margins: {
+    desktop: {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    },
+    mobile: {
+      top: 15,
+      bottom: 15,
+      left: 15,
+      right: 15
+    }
+  }
+};
+```
+
