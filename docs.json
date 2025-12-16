@@ -34,53 +34,6 @@
           "accessibility-widget/features/color",
           "accessibility-widget/features/orientation"
         ]
-      },
-      {
-        "group": "Integration",
-        "pages": [
-          "accessibility-widget/integration/shopify"
-        ]
-      },
-      {
-        "group": "API Reference",
-        "pages": [
-          "accessibility-widget/api/overview",
-          "accessibility-widget/api/configuration",
-          "accessibility-widget/api/methods",
-          "accessibility-widget/api/events"
-        ]
-      },
-      {
-        "group": "Guides",
-        "pages": [
-          "index",
-          "quickstart",
-          "development"
-        ]
-      },
-      {
-        "group": "Customization",
-        "pages": [
-          "essentials/settings",
-          "essentials/navigation"
-        ]
-      },
-      {
-        "group": "Writing content",
-        "pages": [
-          "essentials/markdown",
-          "essentials/code",
-          "essentials/images",
-          "essentials/reusable-snippets"
-        ]
-      },
-      {
-        "group": "AI tools",
-        "pages": [
-          "ai-tools/cursor",
-          "ai-tools/claude-code",
-          "ai-tools/windsurf"
-        ]
       }
     ],
     "global": {
