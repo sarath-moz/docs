@@ -38,9 +38,7 @@
     {
       "group": "Integration",
       "pages": [
-        "accessibility-widget/integration/shopify",
-        "accessibility-widget/integration/wordpress",
-        "accessibility-widget/integration/custom"
+        "accessibility-widget/integration/shopify"
       ]
     },
     {
@@ -85,20 +83,19 @@
       ]
     }
   ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+  "global": {
+    "anchors": [
+      {
+        "anchor": "Documentation",
+        "href": "https://mintlify.com/docs",
+        "icon": "book-open-cover"
+      },
+      {
+        "anchor": "Blog",
+        "href": "https://mintlify.com/blog",
+        "icon": "newspaper"
+      }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
