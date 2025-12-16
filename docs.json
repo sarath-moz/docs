@@ -8,94 +8,96 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": [
-        "accessibility-widget/introduction",
-        "accessibility-widget/installation",
-        "accessibility-widget/quickstart"
-      ]
-    },
-    {
-      "group": "Configuration",
-      "pages": [
-        "accessibility-widget/configuration",
-        "accessibility-widget/theming",
-        "accessibility-widget/positioning"
-      ]
-    },
-    {
-      "group": "Features",
-      "pages": [
-        "accessibility-widget/features/overview",
-        "accessibility-widget/features/profiles",
-        "accessibility-widget/features/content",
-        "accessibility-widget/features/color",
-        "accessibility-widget/features/orientation"
-      ]
-    },
-    {
-      "group": "Integration",
-      "pages": [
-        "accessibility-widget/integration/shopify"
-      ]
-    },
-    {
-      "group": "API Reference",
-      "pages": [
-        "accessibility-widget/api/overview",
-        "accessibility-widget/api/configuration",
-        "accessibility-widget/api/methods",
-        "accessibility-widget/api/events"
-      ]
-    },
-    {
-      "group": "Guides",
-      "pages": [
-        "index",
-        "quickstart",
-        "development"
-      ]
-    },
-    {
-      "group": "Customization",
-      "pages": [
-        "essentials/settings",
-        "essentials/navigation"
-      ]
-    },
-    {
-      "group": "Writing content",
-      "pages": [
-        "essentials/markdown",
-        "essentials/code",
-        "essentials/images",
-        "essentials/reusable-snippets"
-      ]
-    },
-    {
-      "group": "AI tools",
-      "pages": [
-        "ai-tools/cursor",
-        "ai-tools/claude-code",
-        "ai-tools/windsurf"
-      ]
-    }
-  ],
-  "global": {
-    "anchors": [
+  "navigation": {
+    "groups": [
       {
-        "anchor": "Documentation",
-        "href": "https://mintlify.com/docs",
-        "icon": "book-open-cover"
+        "group": "Getting Started",
+        "pages": [
+          "accessibility-widget/introduction",
+          "accessibility-widget/installation",
+          "accessibility-widget/quickstart"
+        ]
       },
       {
-        "anchor": "Blog",
-        "href": "https://mintlify.com/blog",
-        "icon": "newspaper"
+        "group": "Configuration",
+        "pages": [
+          "accessibility-widget/configuration",
+          "accessibility-widget/theming",
+          "accessibility-widget/positioning"
+        ]
+      },
+      {
+        "group": "Features",
+        "pages": [
+          "accessibility-widget/features/overview",
+          "accessibility-widget/features/profiles",
+          "accessibility-widget/features/content",
+          "accessibility-widget/features/color",
+          "accessibility-widget/features/orientation"
+        ]
+      },
+      {
+        "group": "Integration",
+        "pages": [
+          "accessibility-widget/integration/shopify"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "accessibility-widget/api/overview",
+          "accessibility-widget/api/configuration",
+          "accessibility-widget/api/methods",
+          "accessibility-widget/api/events"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "index",
+          "quickstart",
+          "development"
+        ]
+      },
+      {
+        "group": "Customization",
+        "pages": [
+          "essentials/settings",
+          "essentials/navigation"
+        ]
+      },
+      {
+        "group": "Writing content",
+        "pages": [
+          "essentials/markdown",
+          "essentials/code",
+          "essentials/images",
+          "essentials/reusable-snippets"
+        ]
+      },
+      {
+        "group": "AI tools",
+        "pages": [
+          "ai-tools/cursor",
+          "ai-tools/claude-code",
+          "ai-tools/windsurf"
+        ]
       }
-    ]
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Documentation",
+          "href": "https://mintlify.com/docs",
+          "icon": "book-open-cover"
+        },
+        {
+          "anchor": "Blog",
+          "href": "https://mintlify.com/blog",
+          "icon": "newspaper"
+        }
+      ]
+    }
   },
   "logo": {
     "light": "/logo/light.svg",
