@@ -1,0 +1,135 @@
+---
+title: "a11y App"
+description: "The standalone accessibility SaaS app — what makes it different from full-suite and how it's structured."
+---
+
+## Purpose
+
+The **a11y** app is a focused, standalone version of the auditing platform that targets **accessibility-only** use cases. It's sold as a separate product at `accessibility.webyes.com`.
+
+**Key differences from full-suite:**
+
+| Feature | full-suite | a11y |
+|---------|-----------|------|
+| Accessibility auditing | ✅ | ✅ |
+| Performance metrics | ✅ | ❌ |
+| SEO analysis | ✅ | ❌ |
+| Uptime monitoring | ✅ | ❌ |
+| RUM (Real User Monitoring) | ✅ | ❌ |
+| Team management | ✅ | Limited |
+| Billing / subscriptions | ✅ | Separate plans |
+| Simplified onboarding | ❌ | ✅ |
+| Website-level settings | ✅ | ✅ (simplified) |
+
+**Dev URL:** http://localhost:5174
+**Staging:** https://accessibility.staging.webyes.com
+**Production:** https://accessibility.webyes.com
+
+---
+
+## Code Architecture
+
+The a11y app is **nearly identical in structure** to full-suite. Same:
+- Entry point pattern (`main.tsx` → `App.tsx` → TanStack Router)
+- State management (Zustand + TanStack Query)
+- API layer (same backend, different `VITE_API_URL` paths)
+- `packages/common` for shared components
+- `packages/focus-order` for accessibility tooling
+
+The differences are only in:
+1. **Route set** — fewer routes, accessibility-specific flows
+2. **Environment variables** — different URLs
+3. **Analytics IDs** — separate Mixpanel/PostHog project
+
+---
+
+## Route Structure
+
+### Auth Routes (`(auth)/`)
+| File | URL | Description |
+|------|-----|-------------|
+| `login.tsx` | `/login` | Email/password login |
+| `signUp.tsx` | `/sign-up` | Registration |
+| `resetPassword.tsx` | `/reset-password` | Password reset |
+| `account-verification.tsx` | `/account-verification` | Email OTP verification |
+| `confirm-google-signup.tsx` | `/confirm-google-signup` | Google OAuth |
+| `confirm-microsoft-signup.tsx` | `/confirm-microsoft-signup` | Microsoft OAuth |
+| `verify-token.tsx` | `/verify-token` | Token verification |
+| `accessibility.scan.tsx` | `/accessibility/scan` | Direct scan entry point |
+| `new-website.tsx` | `/new-website` | Website onboarding (replaces `trial`) |
+
+### Protected Dashboard Routes (`(protected)/_layout/dashboard/`)
+| File | URL | Description |
+|------|-----|-------------|
+| `index.lazy.tsx` | `/dashboard` | Dashboard home |
+| `setup.lazy.tsx` | `/dashboard/setup` | Setup wizard |
+| `plans.tsx` | `/dashboard/plans` | Accessibility-specific plan listing |
+| `scanning-progress.lazy.tsx` | `/dashboard/scanning-progress` | Live scan view |
+| `scan-history.lazy.tsx` | `/dashboard/scan-history` | History |
+| `scan-customisation.lazy.tsx` | `/dashboard/scan-customisation` | Scan config |
+| `simulator.tsx` | `/dashboard/simulator` | Accessibility simulator |
+| `plan-purchase-success.tsx` | `/dashboard/plan-purchase-success` | Stripe success |
+| `plan-purchase-fail.lazy.tsx` | `/dashboard/plan-purchase-fail` | Stripe failure |
+| `accessibility/index.lazy.tsx` | `/dashboard/accessibility` | Accessibility audit results |
+| `totalIssueList.lazy.tsx` | `/dashboard/total-issue-list` | All issues |
+| `totalPageIssue.lazy.tsx` | `/dashboard/total-page-issue` | Issues by page |
+| `pages.$metrics.tsx` | `/dashboard/pages/:metrics` | Pages by metric |
+| `issueList.$metrics.tsx` | `/dashboard/issue-list/:metrics` | Issues by category |
+| `check-list.$metrics.tsx` | `/dashboard/check-list/:metrics` | Checklist |
+| `affected-pages.$metrics.tsx` | `/dashboard/affected-pages/:metrics` | Affected pages |
+
+### Settings Routes (`(protected)/_layout/settings/`)
+| File | URL | Description |
+|------|-----|-------------|
+| `general-settings.tsx` | `/settings/general-settings` | General preferences |
+| `profile.tsx` | `/settings/profile` | User profile |
+| `team.tsx` | `/settings/team` | Team members |
+| `billing.tsx` | `/settings/billing` | Billing (a11y-specific plans) |
+| `_settings_layout/index.tsx` | `/settings/website-settings` | Website settings |
+| `_settings_layout/accessibility.lazy.tsx` | `/settings/website-settings/accessibility` | Accessibility config |
+
+<Note>
+  The a11y app does **not** have `/settings/organisation`, `/dashboard/performance`, `/dashboard/seo`, `/dashboard/uptime`, `/dashboard/rum`, or `/dashboard/integration` routes.
+</Note>
+
+---
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_API_URL` | Backend URL (same backend as full-suite) |
+| `VITE_REPORT_URL` | Report service URL |
+| `VITE_MARKETING_URL` | Marketing site URL |
+| `VITE_DOMAIN` | Cookie domain |
+| `VITE_A11Y_APP_URL` | This app's public URL |
+| `VITE_SUITE_APP_URL` | Link to full-suite (cross-app links) |
+| `VITE_BUGSNAG_API_KEY` | Separate Bugsnag project |
+
+---
+
+## Analytics Config
+
+Injected only on builds (not in dev). Configured in `apps/a11y/vite.config.ts`:
+
+| Tool | Staging | Production |
+|------|---------|-----------|
+| Mixpanel | `2bad018f875b0d8efeaedb0d52ade605` | Same |
+| PostHog | `phc_oWhtUiJ3EmRwJigU6fGVQVyFnUEVfapoKg52IXI8Owp` | Same |
+| Hotjar | `hjid: 5054270` | Same |
+| Intercom | `q0vsouuk` | `yk9n5990` |
+| CookieYes | Staging ID | Production ID |
+
+---
+
+## When to Work in a11y vs full-suite
+
+| Task | Work in |
+|------|---------|
+| Fix accessibility audit display bug | Both (shared component in `common`) |
+| Add a new a11y-only onboarding step | `apps/a11y` only |
+| Add a performance chart | `apps/full-suite` only |
+| Update the login page | `packages/common/src/components/auth/` |
+| Add a shared UI component | `packages/common` |
+| Update a11y billing flow | `apps/a11y/src/routes/.../billing.tsx` |
+| Update suite billing flow | `apps/full-suite/src/routes/.../billing.tsx` |

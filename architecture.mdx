@@ -1,0 +1,140 @@
+---
+title: "System Architecture"
+description: "High-level view of how the Webyes Auditor platform components interact."
+---
+
+## Platform Overview
+
+The Webyes Auditor platform is composed of three independently deployable layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        FRONTEND (pnpm monorepo)             │
+│                                                             │
+│  ┌──────────────────────┐   ┌───────────────────────────┐  │
+│  │   full-suite app     │   │        a11y app            │  │
+│  │  (port 5173 dev)     │   │    (port 5174 dev)         │  │
+│  │  React + Vite        │   │    React + Vite            │  │
+│  │  TanStack Router     │   │    TanStack Router         │  │
+│  │  Zustand + RQ        │   │    Zustand + RQ            │  │
+│  └──────────┬───────────┘   └────────────┬──────────────┘  │
+│             │                            │                   │
+│             └──────────┬─────────────────┘                  │
+│                        │  shared packages                   │
+│          ┌─────────────▼──────────────────┐                │
+│          │   packages/common              │                  │
+│          │   packages/focus-order         │                  │
+│          └────────────────────────────────┘                 │
+└────────────────────────┬────────────────────────────────────┘
+                         │ HTTPS REST API
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│               BACKEND (auditor-backend)                     │
+│                                                             │
+│   FastAPI + Uvicorn  (port 8000)                            │
+│   Python 3.12  │  SQLAlchemy async  │  Alembic              │
+│                                                             │
+│   ┌──────────┐  ┌─────────┐  ┌──────────┐  ┌───────────┐  │
+│   │  Auth    │  │  Scan   │  │ Billing  │  │   RUM     │  │
+│   │  Router  │  │ Router  │  │  Router  │  │  Router   │  │
+│   └──────────┘  └─────────┘  └──────────┘  └───────────┘  │
+│              ... many more routers                          │
+└──────┬─────────────────────────────┬───────────────────────┘
+       │                             │
+       ▼                             ▼
+┌─────────────┐             ┌────────────────┐
+│  PostgreSQL │             │     Redis      │
+│  (primary   │             │  (caching &    │
+│  database)  │             │   sessions)    │
+└─────────────┘             └────────────────┘
+```
+
+---
+
+## Component Responsibilities
+
+| Component | Responsibility |
+|-----------|---------------|
+| **full-suite** | Full auditing dashboard — accessibility, performance, SEO, uptime, RUM, billing, team management |
+| **a11y** | Standalone accessibility-only SaaS app — simplified onboarding, accessibility audits |
+| **packages/common** | Shared React components, types, utilities, hooks, and icons consumed by both apps |
+| **packages/focus-order** | Standalone library that visualises keyboard focus order in web pages (supports iframes + Shadow DOM) |
+| **auditor-backend** | Central REST API — auth, user management, scans, issues, billing, RUM, reports |
+| **PostgreSQL** | Persistent data store for all entities (users, websites, scans, issues, billing) |
+| **Redis** | Session storage, caching, rate limiting state |
+
+---
+
+## Key Data Flows
+
+### 1. User Authentication
+```
+Browser → POST /api/auth/login
+        ← JWT access_token set as HttpOnly cookie
+        → Subsequent requests include cookie automatically
+```
+
+### 2. Website Audit Scan
+```
+User triggers scan
+  → POST /api/scan/start  (backend queues scan)
+  → Frontend polls GET /api/scan/status/:id
+  → External lighthouse scanner hits backend webhook
+  → GET /api/audit/results  (fetch completed results)
+```
+
+### 3. Report Generation
+```
+User requests PDF
+  → GET /api/report/generate
+  ← Backend compiles audit data
+  ← Signed S3 URL returned for download
+```
+
+### 4. Billing (Stripe)
+```
+User selects plan
+  → POST /api/billing/checkout  (backend creates Stripe session)
+  ← Redirect to Stripe hosted page
+  → Stripe webhook → POST /api/billing/webhook
+  → Backend updates subscription in DB
+  ← Redirect to success/fail URL
+```
+
+---
+
+## Tech Stack at a Glance
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend framework** | React 18 |
+| **Build tool** | Vite 7 + SWC |
+| **Routing** | TanStack Router (file-based) |
+| **Server state** | TanStack Query (React Query) |
+| **Client state** | Zustand |
+| **Forms** | react-hook-form + Zod |
+| **Styling** | Tailwind CSS (`wy-` prefix) + Radix UI |
+| **Package manager** | pnpm 9 (workspaces) |
+| **Backend framework** | FastAPI |
+| **ASGI server** | Uvicorn |
+| **ORM** | SQLAlchemy 2 (async) |
+| **DB driver** | asyncpg (PostgreSQL) |
+| **Migrations** | Alembic |
+| **Cache** | Redis (aioredis) |
+| **Auth** | JWT RS256 + Google/Microsoft OAuth |
+| **Email** | Mailersend (primary) / AWS SES |
+| **File storage** | AWS S3 |
+| **Payments** | Stripe |
+| **AI** | Google Gemini 2.0 Flash |
+| **Monitoring** | OpenTelemetry + Loguru |
+| **Error tracking** | Bugsnag (frontend) |
+
+---
+
+## Environments
+
+| Environment | Frontend URL | Backend URL |
+|------------|-------------|-------------|
+| **Local dev** | http://localhost:5173 / :5174 | http://localhost:8000 |
+| **Staging** | https://app.staging.webyes.com | https://api.staging.webyes.com |
+| **Production** | https://app.webyes.com | https://api.webyes.com |

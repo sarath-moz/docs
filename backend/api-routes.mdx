@@ -1,0 +1,298 @@
+---
+title: "API Routes"
+description: "Complete reference for every endpoint — HTTP method, path, auth requirement, and purpose."
+---
+
+All routes are mounted under `/api`. The base URL in production is `https://api.webyes.com`.
+
+**Authentication:** Most endpoints require `Authorization: Bearer <token>` header.
+**Rate limiting:** Applied to sensitive endpoints (10 requests/minute by IP).
+
+---
+
+## Health Check
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/health` | None | Returns 200 if the service is healthy |
+
+---
+
+## Auth — `/api/auth`
+
+### Standard Auth
+| Method | Path | Body | Auth | Description |
+|--------|------|------|------|-------------|
+| `POST` | `/api/auth/login` | `{email, password}` | None, rate-limited | Login with email/password — returns JWT |
+| `POST` | `/api/auth/logout` | — | `verify_token` | Invalidate current JWT in Redis |
+| `POST` | `/api/auth/forgot-password` | `{email}` | None | Send password reset email |
+| `POST` | `/api/auth/reset-password` | `{token, new_password}` | None | Complete password reset |
+| `POST` | `/api/auth/refresh-token` | — | Bearer refresh_token | Get new access token |
+| `POST` | `/api/auth/validate-token` | — | `verify_token` | Check token validity |
+
+### Google OAuth
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/auth/google-auth` | None | Redirect to Google OAuth consent |
+| `GET` | `/api/auth/google-auth/callback` | None | Handle Google OAuth callback |
+
+### Microsoft OAuth
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/auth/microsoft-auth` | None | Redirect to Microsoft login |
+| `GET` | `/api/auth/microsoft-auth/callback` | None | Handle Microsoft OAuth callback |
+
+### Cognito Auth
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/auth/cognito-auth` | None | Redirect to Cognito login |
+| `GET` | `/api/auth/cognito-auth/callback` | None | Handle Cognito callback |
+| `POST` | `/api/auth/provision-user` | Cognito JWT | Provision user from Cognito token |
+
+---
+
+## Users — `/api/user`
+
+| Method | Path | Body/Params | Auth | Description |
+|--------|------|-------------|------|-------------|
+| `POST` | `/api/user/` | `UserModelInputDTO` | None, rate-limited | Create new user account |
+| `PATCH` | `/api/user/` | `UserModelUpdateDTO` | `verify_token` | Update user profile |
+| `GET` | `/api/user/me/` | — | `verify_token` | Get current user + permissions |
+| `GET` | `/api/user/trial-plan/` | — | `verify_token` | Get user's trial plan details |
+| `POST` | `/api/user/verify-email/` | `{email}` | None, rate-limited | Send OTP to email |
+| `POST` | `/api/user/verify-email-otp/` | `{email, otp}` | None, rate-limited | Verify OTP code |
+| `POST` | `/api/user/verify-email-link/` | `{verification_token}` | None, rate-limited | Verify email via link token |
+| `GET` | `/api/user/resend-email-verification-link/` | — | `verify_token` | Resend verification email |
+| `GET` | `/api/user/roles/` | — | `verify_token` | List all user roles |
+| `POST` | `/api/user/invite-user/` | `UserInviteInputDTO` | `verify_token_needs_email_verification`, rate-limited | Invite user to org |
+| `POST` | `/api/user/accept-invite/` | `UserAcceptInviteInputDTO` | `verify_token_needs_email_verification`, rate-limited | Accept org invitation |
+| `PATCH` | `/api/user/pdf-settings/` | `PdfSettingsDTO` | `verify_token` | Update PDF export colour/logo |
+| `GET` | `/api/user/pdf-settings/` | — | `verify_token` | Get PDF export settings |
+| `POST` | `/api/user/banner-log/` | `{banner_name}` | `verify_token` | Record banner dismissal |
+| `GET` | `/api/user/banner-log/` | — | `verify_token` | Get banner dismissal history |
+
+---
+
+## Websites — `/api/website`
+
+| Method | Path | Body/Params | Auth | Description |
+|--------|------|-------------|------|-------------|
+| `POST` | `/api/website/` | `WebsiteModelInputDTO` | `verify_token` | Add new website to org |
+| `PATCH` | `/api/website/` | `WebsiteModelUpdateInputDTO` | `verify_token_needs_email_verification` | Update website config |
+| `GET` | `/api/website/` | `?website_id` (optional) | `verify_token` | Get all websites for org |
+| `DELETE` | `/api/website/` | `WebsiteModelDeleteInputDTO` | `verify_token_needs_email_verification` | Delete website |
+| `POST` | `/api/website/transfer/` | `WebsiteModelTransferInputDTO` | `verify_token_needs_email_verification` | Transfer website to another org |
+| `GET` | `/api/website/search/` | `?search_string&organisation_id` | `verify_token` | Search websites |
+| `GET` | `/api/website/first-time-website-creation/` | — | `verify_token` | Check if first website in org |
+| `GET` | `/api/website/get-region/` | — | `verify_token` | Recommend region based on IP |
+
+**Required permissions:**
+- Add: `settings:website:add`
+- Delete: `settings:website:delete`
+- Transfer: `settings:website:transfer`
+
+---
+
+## Website Audits (Scans) — `/api/website-audit`
+
+| Method | Path | Body/Params | Auth | Description |
+|--------|------|-------------|------|-------------|
+| `POST` | `/api/website-audit/` | `WebsiteAuditModelInputDTO` | `verify_token` | Start a new scan |
+| `POST` | `/api/website-audit/rescan/` | `RescanWebsiteAuditModelInputDTO` | `verify_token_needs_email_verification` | Re-run a completed scan |
+| `POST` | `/api/website-audit/cancel-scan/` | `ScanCancelModelInputDTO` | `verify_token` | Cancel an in-progress scan |
+| `GET` | `/api/website-audit/history/` | `?website_id&offset&limit&device&enable_aaa` | `verify_token` | Paginated scan history |
+| `GET` | `/api/website-audit/latest-audit-status/` | `?website_id&audit_id` | `verify_token` | Get latest scan status |
+| `POST` | `/api/website-audit/clear-audit-status/` | `?website_id` | `verify_token` | Clear stuck in-progress status |
+| `GET` | `/api/website-audit/first-scan-done/` | — | `verify_token` | Check if any scan ever completed |
+
+**Scan config options:**
+- `scan_type`: `quick` | `full` | `custom`
+- `audit_types`: `["accessibility", "best-practices", "performance", "seo"]`
+- `standards`: `["wcag2.2a", "wcag2.2aa", "wcag2.2aaa", "ADA"]`
+- `audit_device`: `mobile` | `desktop`
+
+**Required permission:** `scan:full_scan:add`
+
+---
+
+## Organisations — `/api/organisation`
+
+| Method | Path | Body/Params | Auth | Description |
+|--------|------|-------------|------|-------------|
+| `POST` | `/api/organisation/` | `OrganisationInputDTO` | `verify_token` | Create organisation |
+| `GET` | `/api/organisation/` | — | `verify_token` | Get user's organisations |
+| `PATCH` | `/api/organisation/` | `OrganisationUpdateDTO` | `verify_token_needs_email_verification` | Update organisation |
+| `GET` | `/api/organisation/{org_id}/users` | — | `verify_token` | List all org members |
+| `DELETE` | `/api/organisation/{user_id}` | — | `verify_token_needs_email_verification` | Remove user from org |
+
+---
+
+## Plans — `/api/plan`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/plan/` | `verify_token` | Get all active subscription plans |
+| `GET` | `/api/plan/{plan_id}` | `verify_token` | Get a specific plan's details |
+
+---
+
+## Stripe / Billing — `/api/stripe`
+
+| Method | Path | Body | Auth | Description |
+|--------|------|------|------|-------------|
+| `POST` | `/api/stripe/create-checkout-session/` | `StripeCheckoutModelInputDTO` | `verify_token` | Create Stripe checkout session, returns redirect URL |
+| `GET` | `/api/stripe/subscription-details/` | — | `verify_token` | Get current subscription status |
+| `POST` | `/api/stripe/cancel-subscription/` | — | `verify_token` | Cancel at period end |
+| `POST` | `/api/stripe/pause-subscription/` | — | `verify_token` | Pause subscription |
+| `POST` | `/api/stripe/resume-subscription/` | — | `verify_token` | Resume paused subscription |
+| `GET` | `/api/stripe/transactions/` | — | `verify_token` | Payment history list |
+| `POST` | `/api/stripe/webhook` | Stripe event payload | None (Stripe signature) | Stripe webhook handler |
+
+**Webhook events handled:** `customer.subscription.created/updated/deleted`, `invoice.payment_succeeded/failed`
+
+---
+
+## Audit Results — `/api/results`
+
+| Method | Path | Params | Auth | Description |
+|--------|------|--------|------|-------------|
+| `GET` | `/api/results/` | `?website_id&audit_id&device` | `verify_token` | Get full audit results |
+| `GET` | `/api/results/{audit_id}` | — | `verify_token` | Get specific audit result |
+
+---
+
+## Accessibility Data — `/api/accessibility`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/accessibility/` | `verify_token` | Get accessibility audit data for a scan |
+| `POST` | `/api/accessibility/` | `verify_token` | Save accessibility audit result (called by scanner) |
+
+---
+
+## Reports — `/api/report`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/report/` | `verify_token` | Generate/retrieve audit report |
+| `POST` | `/api/report/` | `verify_token` | Create a new report (triggers generation) |
+
+---
+
+## AI Solutions — `/api/solutions`
+
+| Method | Path | Body | Auth | Description |
+|--------|------|------|------|-------------|
+| `POST` | `/api/solutions/` | `IssueObjectDTO` | `verify_token` | Generate AI fix for an accessibility issue |
+
+**Request:** Issue details including HTML snippet, issue rule ID, description
+**Response:** `{current_code, correct_code, explanation}` from Gemini AI
+
+---
+
+## Scan Scheduling — `/api/scan-schedule`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/scan-schedule/` | `verify_token` | Create a scan schedule |
+| `GET` | `/api/scan-schedule/` | `verify_token` | Get schedules for a website |
+| `PATCH` | `/api/scan-schedule/` | `verify_token` | Update a schedule |
+| `DELETE` | `/api/scan-schedule/` | `verify_token` | Delete a schedule |
+
+**Frequencies:** `daily` | `weekly` | `monthly` | `yearly` | `once`
+
+---
+
+## Uptime Monitoring — `/api/uptime-monitor`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/uptime-monitor/` | `verify_token` | Create uptime monitor for a website |
+| `GET` | `/api/uptime-monitor/` | `verify_token` | Get monitors and their status |
+| `PATCH` | `/api/uptime-monitor/` | `verify_token` | Update monitor config |
+| `DELETE` | `/api/uptime-monitor/` | `verify_token` | Delete a monitor |
+
+---
+
+## Google Search Console — `/api/search-console`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/search-console/auth` | `verify_token` | Redirect to Google OAuth consent |
+| `GET` | `/api/search-console/auth/callback` | None | Google OAuth callback handler |
+| `GET` | `/api/search-console/` | `verify_token` | Get Search Console data for a website |
+
+---
+
+## Website Audit Settings — `/api/website-audit-settings`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/website-audit-settings/` | `verify_token` | Save per-website audit configuration |
+| `GET` | `/api/website-audit-settings/` | `verify_token` | Get audit settings for a website |
+
+---
+
+## Regions — `/api/region`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/region/` | `verify_token` | List all available scan regions |
+
+---
+
+## Real User Monitoring — `/api/rum`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/rum/` | `verify_token` | Get RUM metrics for a website |
+| `POST` | `/api/rum/` | `verify_token` | Save RUM configuration |
+| `PATCH` | `/api/rum/` | `verify_token` | Update RUM settings |
+
+---
+
+## Offboarding — `/api/offboarding`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/offboarding/` | `verify_token` | Record offboarding reason and delete account |
+
+---
+
+## Redis Utilities — `/api/redis`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/redis/` | `verify_token` | Get value by key |
+| `POST` | `/api/redis/` | `verify_token` | Set key-value pair |
+| `DELETE` | `/api/redis/` | `verify_token` | Delete key |
+
+---
+
+## Admin — `/api/wy-admin`
+
+Internal admin endpoints for WebYes operations. Requires admin-level JWT.
+
+---
+
+## Response Format
+
+All endpoints return consistent JSON:
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+On error:
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "detail": "..."
+}
+```
+
+HTTP status codes follow REST conventions: `200` (OK), `201` (Created), `400` (Bad Request), `401` (Unauthorized), `403` (Forbidden), `404` (Not Found), `422` (Validation Error), `429` (Rate Limited).

@@ -1,0 +1,216 @@
+---
+title: "Local Development Setup"
+description: "Get the full Webyes Auditor stack running on your machine."
+---
+
+## Prerequisites
+
+Make sure you have the following installed before starting:
+
+| Tool | Version | Install |
+|------|---------|---------|
+| **Node.js** | ≥ 20.14.0 | [nodejs.org](https://nodejs.org) |
+| **pnpm** | 9.x | `npm install -g pnpm@9` |
+| **Python** | 3.12 | [python.org](https://python.org) |
+| **Poetry** | latest | `pip install poetry` |
+| **PostgreSQL** | 14+ | [postgresql.org](https://postgresql.org) |
+| **Redis** | 7+ | [redis.io](https://redis.io) |
+| **Git** | latest | [git-scm.com](https://git-scm.com) |
+
+---
+
+## Step 1 — Clone the Repositories
+
+```bash
+# Clone frontend monorepo
+git clone <repo-url>/auditor-app-monorepo
+cd auditor-app-monorepo
+
+# Clone backend (separate repo)
+git clone <repo-url>/auditor-backend
+```
+
+---
+
+## Step 2 — Frontend Setup
+
+```bash
+cd auditor-app-monorepo
+
+# Install all workspace dependencies
+pnpm install
+
+# Copy env files for each app
+cp apps/full-suite/.env.sample apps/full-suite/.env
+cp apps/a11y/.env.sample apps/a11y/.env
+```
+
+Edit `apps/full-suite/.env`:
+```ini
+VITE_API_URL="http://localhost:8000/"
+VITE_REPORT_URL="http://localhost:8000"
+VITE_DOMAIN="localhost"
+```
+
+Edit `apps/a11y/.env` with the same values.
+
+<Info>
+  The `VITE_` prefix is required — Vite only exposes env vars with this prefix to the browser. Never put secrets in these files.
+</Info>
+
+---
+
+## Step 3 — Backend Setup
+
+```bash
+cd auditor-backend
+
+# Install Python dependencies
+poetry install
+
+# Copy the env file
+cp .env.sample .env
+```
+
+Edit `.env` with your local values:
+```ini
+# App
+AUDITOR_APP_HOST="127.0.0.1"
+AUDITOR_APP_PORT=8000
+AUDITOR_APP_RELOAD=True        # Enable hot-reload in dev
+AUDITOR_APP_ENVIRONMENT="dev"
+
+# Database (PostgreSQL)
+AUDITOR_APP_DB_HOST="localhost"
+AUDITOR_APP_DB_PORT=5432
+AUDITOR_APP_DB_USER="admin"
+AUDITOR_APP_DB_PASS="admin"
+AUDITOR_APP_DB_BASE="auditor_dev"
+
+# Redis
+AUDITOR_APP_REDIS_HOST="localhost"
+AUDITOR_APP_REDIS_PORT=6379
+```
+
+<Warning>
+  Do **not** commit your `.env` file. It's already in `.gitignore`. For secrets like Stripe keys and AWS credentials, ask a team lead.
+</Warning>
+
+---
+
+## Step 4 — Database & Migrations
+
+```bash
+# Create the PostgreSQL database
+createdb auditor_dev
+
+# Run Alembic migrations
+cd auditor-backend
+poetry run alembic upgrade head
+```
+
+---
+
+## Step 5 — Generate RSA Keys (JWT)
+
+The backend uses RS256 JWT. You need to generate a key pair once:
+
+```bash
+cd auditor-backend
+mkdir -p cert
+
+# Generate private key
+openssl genrsa -out cert/private.key 2048
+
+# Generate public key from private key
+openssl rsa -in cert/private.key -pubout -out cert/public.key
+```
+
+---
+
+## Step 6 — Start the Dev Servers
+
+You can use Claude's built-in server launcher (configured in `.claude/launch.json`):
+
+```
+Ask Claude: "start all dev servers"
+```
+
+Or manually in separate terminals:
+
+**Terminal 1 — Backend:**
+```bash
+cd auditor-backend
+poetry run python -m auditor_app
+# → http://localhost:8000
+# → Swagger UI: http://localhost:8000/api/openapi.json
+```
+
+**Terminal 2 — full-suite:**
+```bash
+cd auditor-app-monorepo
+pnpm --filter full-suite dev
+# → http://localhost:5173
+```
+
+**Terminal 3 — a11y:**
+```bash
+cd auditor-app-monorepo
+pnpm --filter a11y dev
+# → http://localhost:5174
+```
+
+---
+
+## Step 7 — Verify Everything Works
+
+| Check | URL | Expected |
+|-------|-----|----------|
+| Backend health | http://localhost:8000/api/health | `{"status": "ok"}` |
+| Backend docs | http://localhost:8000/api/openapi.json | OpenAPI JSON |
+| full-suite | http://localhost:5173 | Login page |
+| a11y | http://localhost:5174 | Login page |
+
+---
+
+## Git Workflow
+
+This project uses **Conventional Commits** enforced by `commitlint`:
+
+```bash
+# ✅ Valid commit messages
+git commit -m "feat: add scan history pagination"
+git commit -m "fix: correct token refresh logic"
+git commit -m "docs: update onboarding guide"
+git commit -m "refactor: extract billing service"
+
+# ❌ Invalid (will be rejected by pre-commit hook)
+git commit -m "fixed stuff"
+git commit -m "WIP"
+```
+
+**Commit types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`
+
+Pre-commit hooks (Husky) will automatically run `eslint --fix` and `prettier` on staged files.
+
+---
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="pnpm install fails with peer dependency errors">
+    Make sure your Node.js version is ≥ 20.14.0. Run `node --version` to check.
+  </Accordion>
+  <Accordion title="Backend fails to start — cannot connect to DB">
+    Ensure PostgreSQL is running (`pg_isready`) and the database exists (`createdb auditor_dev`). Check `AUDITOR_APP_DB_*` values in `.env`.
+  </Accordion>
+  <Accordion title="Backend fails — JWT key not found">
+    Run the RSA key generation step (Step 5). The paths in `.env` must point to the generated files.
+  </Accordion>
+  <Accordion title="Frontend shows CORS errors">
+    Make sure `VITE_API_URL` ends with a trailing slash and points to your running backend. Also ensure the backend has your `localhost` origin in its CORS config.
+  </Accordion>
+  <Accordion title="Route tree not updating after adding a new route file">
+    The route tree is auto-generated by Vite. Just save any file in `src/routes/` and the Vite plugin will regenerate `routeTree.gen.ts`.
+  </Accordion>
+</AccordionGroup>

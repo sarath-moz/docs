@@ -1,0 +1,104 @@
+---
+title: "Introduction for New Developers"
+description: "A guided tour of the Webyes Auditor platform before you write your first line of code."
+---
+
+## What is Webyes Auditor?
+
+Webyes Auditor is a SaaS web accessibility and performance auditing platform. It allows users to:
+
+- **Scan websites** for accessibility (WCAG), performance (Lighthouse), SEO, and quality issues
+- **Track issues** over time with scan history and trend analysis
+- **Monitor uptime** with real-time alerting
+- **Collect RUM (Real User Monitoring)** data from live visitors
+- **Generate reports** (PDF/online) for stakeholders
+- **Manage teams and billing** (subscriptions via Stripe)
+
+---
+
+## Two Frontend Apps, One Backend
+
+The platform ships as **two separate React SPAs** that share code through a monorepo:
+
+<Columns cols={2}>
+  <Card title="full-suite" icon="browser">
+    The full-featured product: accessibility + performance + SEO + uptime + RUM + billing + team management. Deployed at **app.webyes.com**.
+  </Card>
+  <Card title="a11y" icon="universal-access">
+    Accessibility-only SaaS — a simplified, standalone version focused purely on WCAG auditing. Deployed at **accessibility.webyes.com**.
+  </Card>
+</Columns>
+
+Both apps talk to the **same backend** (`auditor-backend` — FastAPI on Python).
+
+---
+
+## Repository Map
+
+```
+webyes/
+├── auditor-app-monorepo/          # All frontend code
+│   ├── apps/
+│   │   ├── full-suite/            # Main dashboard app
+│   │   └── a11y/                  # Accessibility standalone app
+│   ├── packages/
+│   │   ├── common/                # Shared UI components, types, utils
+│   │   └── focus-order/           # @webyes/focus-order library
+│   ├── package.json               # Root workspace config
+│   └── pnpm-workspace.yaml        # pnpm workspace definition
+│
+└── auditor-backend/               # Python FastAPI backend
+    ├── auditor_app/
+    │   ├── web/
+    │   │   ├── application.py     # FastAPI app factory
+    │   │   └── api/               # All route handlers
+    │   ├── db/
+    │   │   └── models/            # SQLAlchemy ORM models
+    │   ├── services/              # Business logic layer
+    │   └── settings.py            # All configuration (env-driven)
+    ├── migrations/                # Alembic DB migrations
+    └── pyproject.toml             # Python dependencies
+```
+
+---
+
+## Key Concepts to Understand First
+
+Before diving into code, make sure you're comfortable with these:
+
+<AccordionGroup>
+  <Accordion title="TanStack Router (file-based routing)">
+    Both apps use TanStack Router with **file-based routing**. Routes live in `src/routes/` and the router tree is **auto-generated** into `src/routeTree.gen.ts` by the Vite plugin — never edit that file manually.
+
+    - `_layout.tsx` files define nested layouts
+    - `.lazy.tsx` suffix = code-split, loaded on demand
+    - `$param` in filenames = dynamic route segment
+    - `(group)` folders = route groups (no URL segment added)
+  </Accordion>
+
+  <Accordion title="TanStack Query (server state)">
+    All API data is fetched and cached through **TanStack Query** (React Query v5). You'll find query hooks in `src/store/server/features/`. The pattern is:
+    - `queries.ts` — read operations (`useQuery`)
+    - `mutate.ts` / `mutation.ts` — write operations (`useMutation`)
+  </Accordion>
+
+  <Accordion title="Zustand (client state)">
+    UI state that doesn't come from the server (modals open/closed, selected scan, etc.) lives in **Zustand** stores under `src/store/client/`. Each store is a single file exporting one `create()` hook.
+  </Accordion>
+
+  <Accordion title="Shared packages/common">
+    **Never copy-paste components between apps.** If a component is needed in both apps, it belongs in `packages/common/src/components/`. Both apps import from there directly.
+  </Accordion>
+
+  <Accordion title="FastAPI dependency injection">
+    The backend uses FastAPI's dependency injection system extensively. Database sessions, the current authenticated user, and rate limiters are all injected via `Depends(...)`. Look for `dependencies/` folders or inline `Depends` in route handlers.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Step
+
+<Card title="Set up your local environment" icon="terminal" href="/onboarding/dev-setup">
+  Follow the step-by-step guide to get all three servers running locally.
+</Card>

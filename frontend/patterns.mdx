@@ -1,0 +1,361 @@
+---
+title: "Patterns & Conventions"
+description: "The standard way to implement routing, state, forms, and styling in the Webyes monorepo."
+---
+
+## File-Based Routing (TanStack Router)
+
+Both apps use TanStack Router's **file-based routing**. The router tree is **auto-generated** by the Vite plugin — you only create/delete/rename files in `src/routes/`.
+
+<Warning>
+  Never manually edit `src/routeTree.gen.ts`. It's auto-generated on every save. Editing it will be overwritten immediately.
+</Warning>
+
+### Route File Naming Conventions
+
+| Convention | Meaning | Example |
+|-----------|---------|---------|
+| `__root.tsx` | Root layout (wraps everything) | `__root.tsx` |
+| `index.tsx` | Index route for a path | `/dashboard` from `dashboard/index.tsx` |
+| `(group)/` | Route group — no URL segment added | `(auth)/login.tsx` → `/login` |
+| `_layout.tsx` | Layout component for nested routes | `dashboard/_layout.tsx` |
+| `_prefix/` | Layout folder prefix | `_layout/dashboard/` |
+| `$param` | Dynamic segment | `pages.$metrics.tsx` → `/pages/:metrics` |
+| `.lazy.tsx` | Code-split route (loaded on demand) | `scan-history.lazy.tsx` |
+
+### Creating a New Route
+
+```bash
+# 1. Add a file in src/routes/
+# Example: apps/full-suite/src/routes/(protected)/_layout/dashboard/new-feature.lazy.tsx
+
+# 2. Save the file — Vite auto-generates routeTree.gen.ts
+# 3. Navigate to /dashboard/new-feature in the browser
+```
+
+```typescript
+// new-feature.lazy.tsx
+import { createLazyFileRoute } from "@tanstack/react-router"
+
+export const Route = createLazyFileRoute(
+  "/(protected)/_layout/dashboard/new-feature"
+)({
+  component: NewFeaturePage,
+})
+
+function NewFeaturePage() {
+  return <div>New Feature</div>
+}
+```
+
+### Route with Dynamic Parameter
+
+```typescript
+// pages.$metrics.tsx
+import { createFileRoute } from "@tanstack/react-router"
+
+export const Route = createFileRoute(
+  "/(protected)/_layout/dashboard/pages/$metrics"
+)({
+  component: PagesMetricsPage,
+})
+
+function PagesMetricsPage() {
+  const { metrics } = Route.useParams()
+  return <div>Metrics: {metrics}</div>
+}
+```
+
+### Accessing Router Context
+
+```typescript
+// Context (userEmail, setEmail) is available in all routes
+import { useRouteContext } from "@tanstack/react-router"
+
+function MyComponent() {
+  const { userEmail } = useRouteContext({ from: "__root__" })
+}
+```
+
+---
+
+## Server State (TanStack Query)
+
+All **data fetched from the backend** lives in TanStack Query. Never store API data in Zustand — that's for local UI state only.
+
+### Standard Query Hook Pattern
+
+```typescript
+// src/store/server/features/websites/queries.ts
+import { useQuery } from "@tanstack/react-query"
+import { fetchWebsiteList } from "@/model/website"
+
+export const useWebsiteList = (orgId: string) => {
+  return useQuery({
+    queryKey: ["websiteList", orgId],   // Unique key — include all dependencies
+    queryFn: () => fetchWebsiteList(orgId),
+    enabled: !!orgId,                   // Only fetch when orgId is truthy
+    refetchOnWindowFocus: false,        // Standard — prevents refetch on tab switch
+  })
+}
+```
+
+### Standard Mutation Pattern
+
+```typescript
+// src/store/server/features/scan/mutate.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { startScan } from "@/model/website"
+
+export const useStartScan = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: startScan,
+    onSuccess: () => {
+      // Invalidate relevant queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ["scanHistory"] })
+    },
+  })
+}
+```
+
+### Polling for Live Data
+
+Used for scan status updates:
+
+```typescript
+export const useScanStatus = (auditId: string) => {
+  return useQuery({
+    queryKey: ["scanStatus", auditId],
+    queryFn: () => getScanStatus(auditId),
+    refetchInterval: (query) => {
+      // Stop polling when scan is complete
+      return query.state.data?.status === "completed" ? false : 3000
+    },
+  })
+}
+```
+
+### Query Keys Convention
+
+Use arrays to namespace query keys by feature:
+```typescript
+["websiteList", orgId]           // ✅
+["scanHistory", websiteId]       // ✅
+["user", "me"]                   // ✅
+["auditResult", auditId, device] // ✅
+"websiteList"                    // ❌ — use arrays, not strings
+```
+
+---
+
+## Client State (Zustand)
+
+Use Zustand for **UI state** that doesn't come from the server: modal open/closed, selected tab, pending selections.
+
+### Store Pattern
+
+```typescript
+// src/store/client/dialogue.ts
+import { create } from "zustand"
+
+interface DialogueState {
+  isAddWebsiteOpen: boolean
+  isDeleteConfirmOpen: boolean
+}
+
+interface DialogueActions {
+  setIsAddWebsiteOpen: (open: boolean) => void
+  setIsDeleteConfirmOpen: (open: boolean) => void
+}
+
+const useDialogue = create<DialogueState & DialogueActions>((set) => ({
+  isAddWebsiteOpen: false,
+  isDeleteConfirmOpen: false,
+  setIsAddWebsiteOpen: (open) => set({ isAddWebsiteOpen: open }),
+  setIsDeleteConfirmOpen: (open) => set({ isDeleteConfirmOpen: open }),
+}))
+
+export default useDialogue
+```
+
+```typescript
+// Usage in a component
+import useDialogue from "@/store/client/dialogue"
+
+function WebsiteHeader() {
+  const { isAddWebsiteOpen, setIsAddWebsiteOpen } = useDialogue()
+
+  return (
+    <button onClick={() => setIsAddWebsiteOpen(true)}>
+      Add Website
+    </button>
+  )
+}
+```
+
+### Rule of Thumb: Zustand vs Query
+
+| Data | Use |
+|------|-----|
+| Website list from API | TanStack Query |
+| Currently selected website ID | Zustand |
+| Scan history from API | TanStack Query |
+| Scan schedule the user just configured | Zustand (until submitted) |
+| Dialog open state | Zustand |
+| User profile from API | TanStack Query |
+
+---
+
+## Forms (react-hook-form + Zod)
+
+All forms use **react-hook-form** with **Zod** validation via `@hookform/resolvers`.
+
+### Standard Form Pattern
+
+```typescript
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+// 1. Define the schema
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+})
+
+type LoginForm = z.infer<typeof loginSchema>
+
+// 2. Use the form
+function LoginPage() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+  })
+
+  const onSubmit = async (data: LoginForm) => {
+    await login(data)
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register("email")} />
+      {errors.email && <p>{errors.email.message}</p>}
+
+      <input type="password" {...register("password")} />
+      {errors.password && <p>{errors.password.message}</p>}
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Logging in..." : "Login"}
+      </button>
+    </form>
+  )
+}
+```
+
+### Reusable Validation Schemas
+
+Common schemas are in `packages/common/src/utils/validations.ts`. Import from there:
+
+```typescript
+import { emailSchema, urlSchema, passwordSchema } from "common/src/utils/validations"
+```
+
+---
+
+## API Service Pattern
+
+API calls live in `src/model/` (service files). They are plain async functions, not hooks — hooks live in `src/store/server/`.
+
+```typescript
+// src/model/website.ts
+const API_URL = import.meta.env.VITE_API_URL
+
+export const fetchWebsiteList = async (orgId: string): Promise<Website[]> => {
+  const token = getCookie("access_token")
+
+  const res = await fetch(`${API_URL}api/website/?org_id=${orgId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  })
+
+  const json = await res.json()
+  if (!json.success) throw new Error(json.message)
+  return json.data
+}
+```
+
+### Authentication
+
+Auth token is read from the **`access_token` cookie** on every request:
+```typescript
+import { getCookie } from "common/src/utils/common"
+
+const token = getCookie("access_token")
+// → "Bearer eyJhbGci..."
+```
+
+---
+
+## Styling (Tailwind CSS)
+
+### Tailwind Prefix
+
+All utilities use the **`wy-` prefix** to avoid conflicts with third-party styles:
+
+```tsx
+// ✅ Correct
+<div className="wy-flex wy-items-center wy-gap-4 wy-p-6">
+
+// ❌ Wrong — unprefixed won't work
+<div className="flex items-center gap-4 p-6">
+```
+
+### Conditional Classes
+
+Use `clsx` and `tailwind-merge` together:
+
+```typescript
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+// Helper (often defined as `cn` in utils)
+const cn = (...args: Parameters<typeof clsx>) => twMerge(clsx(...args))
+
+// Usage
+<div className={cn(
+  "wy-rounded-lg wy-p-4",
+  isActive && "wy-bg-webyes-primary wy-text-white",
+  isDisabled && "wy-opacity-50 wy-cursor-not-allowed",
+)}>
+```
+
+### Theme Colours
+
+Defined in each app's `tailwind.config.js`:
+
+```
+wy-bg-webyes-primary    → Primary brand color
+wy-bg-webyes-secondary  → Secondary color
+wy-bg-webyes-IN         → Info/neutral
+wy-bg-webyes-DE         → Destructive/danger
+```
+
+Dark mode uses CSS variables (HSL-based), toggled via a `dark` class on `<html>`.
+
+---
+
+## Component Development Rules
+
+1. **Shared = goes in `packages/common`** — never duplicate across apps
+2. **App-specific = stays in `apps/<name>/src/components/`**
+3. **Use Radix UI via `packages/common/src/components/shadcn/`** — never install Radix directly in an app
+4. **No inline styles** — Tailwind classes only
+5. **All icons from `packages/common/src/components/icons/`** — add new icons there if missing
+6. **Forms always use Zod resolver** — no manual validation logic

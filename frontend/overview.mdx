@@ -1,0 +1,134 @@
+---
+title: "Monorepo Overview"
+description: "How the auditor-app-monorepo is structured and how the workspace fits together."
+---
+
+## What's in the Monorepo
+
+The frontend is a **pnpm workspace monorepo** containing two apps and two shared packages:
+
+```
+auditor-app-monorepo/
+├── apps/
+│   ├── full-suite/          # Main auditing dashboard (port 5173)
+│   └── a11y/                # Accessibility standalone app (port 5174)
+├── packages/
+│   ├── common/              # Shared UI library (components, types, utils)
+│   └── focus-order/         # @webyes/focus-order (published npm package)
+├── package.json             # Root — workspace scripts, dev tooling
+├── pnpm-workspace.yaml      # Declares apps/* and packages/* as workspaces
+└── .husky/                  # Git hooks
+```
+
+---
+
+## Package Manager: pnpm Workspaces
+
+**pnpm v9.15.2** with Node ≥ 20.14.0 required.
+
+The root `package.json` exposes convenience scripts to run commands scoped to a specific workspace:
+
+| Script | Equivalent to |
+|--------|--------------|
+| `pnpm suite <cmd>` | `pnpm --filter full-suite <cmd>` |
+| `pnpm a11y <cmd>` | `pnpm --filter a11y <cmd>` |
+| `pnpm common <cmd>` | `pnpm --filter common <cmd>` |
+| `pnpm focus-order <cmd>` | `pnpm --filter @webyes/focus-order <cmd>` |
+
+```bash
+# Examples
+pnpm suite dev          # Start full-suite dev server
+pnpm a11y build         # Build the a11y app
+pnpm common build       # Build the common package
+pnpm clean              # Remove all node_modules
+```
+
+---
+
+## Code Quality Tooling
+
+### ESLint
+- **Version:** 9.27.0 (flat config format)
+- **Plugins:** `typescript-eslint`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `eslint-plugin-prettier`
+- **Run:** `pnpm lint` from repo root
+
+### Prettier
+- **Version:** 3.5.3
+- **Config:** `.prettierrc.json` at root (double quotes by default)
+- **Run:** `pnpm format` from repo root
+
+### Husky + lint-staged
+Pre-commit hook automatically runs:
+1. `eslint --fix` on `**/*.{js,ts,tsx}`
+2. `prettier --write` on all staged files
+
+### Commitlint
+Enforces **Conventional Commits** on every `git commit`:
+```
+<type>(<scope>): <subject>
+```
+Types: `feat` · `fix` · `docs` · `style` · `refactor` · `test` · `chore` · `perf`
+
+---
+
+## How Packages Are Shared
+
+Apps reference shared packages via **workspace protocol** in their `package.json`:
+
+```json
+{
+  "dependencies": {
+    "common": "workspace:*",
+    "@webyes/focus-order": "workspace:*"
+  }
+}
+```
+
+pnpm symlinks these automatically — no publishing step needed during development.
+
+---
+
+## Build Pipeline
+
+Each app is built with **Vite 7 + SWC**:
+
+```bash
+# Type-check + build (output goes to apps/<name>/dist/)
+pnpm suite build
+pnpm a11y build
+```
+
+The `@tanstack/router-vite-plugin` runs during build/dev to:
+1. Scan `src/routes/` for route files
+2. Auto-generate `src/routeTree.gen.ts`
+3. Enable automatic code-splitting on `.lazy.tsx` routes
+
+---
+
+## TypeScript Setup
+
+| App | Target | Strict | Path Alias |
+|-----|--------|--------|-----------|
+| full-suite | ES2020 | ✅ | `@/` → `./src/` |
+| a11y | ES2020 | ✅ | `@/` → `./src/` |
+| focus-order | ES2022 | ✅ | None |
+
+Each app has its own `tsconfig.json`. The `packages/common` package is consumed directly from source (no separate build step for development).
+
+---
+
+## Environment Variables
+
+Each app has its own `.env` / `.env.sample`. **All variables must be prefixed with `VITE_`** to be accessible in browser code.
+
+```typescript
+// ✅ Correct
+const API_URL = import.meta.env.VITE_API_URL
+
+// ❌ Wrong — undefined at runtime
+const API_URL = import.meta.env.SECRET_KEY
+```
+
+See individual app docs for the full variable lists:
+- [full-suite env vars](/frontend/full-suite#environment-variables)
+- [a11y env vars](/frontend/a11y#environment-variables)

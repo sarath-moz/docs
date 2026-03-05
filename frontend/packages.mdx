@@ -1,0 +1,229 @@
+---
+title: "Shared Packages"
+description: "packages/common (shared UI library) and packages/focus-order (@webyes/focus-order) explained."
+---
+
+## packages/common
+
+The `common` package is a **shared React component library** consumed by both the `full-suite` and `a11y` apps. It lives in `packages/common/` and is referenced via pnpm workspace protocol (`"common": "workspace:*"`).
+
+<Warning>
+  Never copy-paste components between apps. If a component is needed in both, it belongs in `packages/common`. If it's specific to one app, keep it in that app's `src/components/`.
+</Warning>
+
+---
+
+### Component Categories
+
+Location: `packages/common/src/components/`
+
+#### Auth Components (`auth/`)
+UI for login, signup, and authentication flows shared between both apps.
+
+| Component | Purpose |
+|-----------|---------|
+| `LoginBox` | Email/password login form |
+| `SignupModal` | Registration modal |
+| `Carousel` | Auth page marketing carousel |
+| `SocialSign` | Google / Microsoft OAuth buttons |
+
+#### Issue Display (`issues/`)
+Components for listing, filtering, and displaying audit issues.
+
+#### Accessibility Results (`accessibility/`)
+Charts, tables, and detail views for WCAG audit results.
+
+#### Performance Results (`performance/`)
+Lighthouse score displays and metric breakdowns.
+
+#### Billing UI (`billing/`)
+Plan comparison cards, billing history tables, upgrade prompts.
+
+#### Scan Components (`scan/`)
+Scan configuration forms, progress indicators.
+
+#### Setup / Onboarding (`setup/`)
+Website setup wizard steps, onboarding flows.
+
+#### Off-boarding (`off-boarding/`)
+Account cancellation flows.
+
+#### Checklist (`checklist/`)
+Interactive accessibility compliance checklist.
+
+#### Radix UI Wrappers (`shadcn/`)
+Custom-styled wrappers around Radix UI primitives used throughout both apps:
+
+| Component | Wraps |
+|-----------|-------|
+| `Dialog` | `@radix-ui/react-dialog` |
+| `DropDownMenu` | `@radix-ui/react-dropdown-menu` |
+| `Popover` | `@radix-ui/react-popover` |
+| `Select` | `@radix-ui/react-select` |
+| `Tooltip` | `@radix-ui/react-tooltip` |
+| `Calendar` | `react-day-picker` |
+| `Command` | `cmdk` |
+| `Drawer` | `vaul` |
+| `Table` | Custom HTML table |
+| `Toggle` | `@radix-ui/react-switch` |
+
+#### Utility Components
+
+| Component | Purpose |
+|-----------|---------|
+| `Toast/` | Toast notifications (uses Sonner) |
+| `Skeleton/` | Loading skeleton states |
+| `Empty/` | Empty state placeholders (EmptyBilling, IssueSidebar, Graph, Table, Text) |
+| `Graphs/` | Chart components (wrapping Recharts) |
+| `TableOperations/` | Pagination, TableFilter, TableModal, Actions |
+| `icons/` | 150+ SVG icon components |
+| `images/` | SVG illustrations |
+| `BFS.tsx` | Breadth-first search visualizer |
+| `Bugsnag.tsx` | Error tracking provider wrapper |
+
+---
+
+### Shared Types
+
+File: `packages/common/src/types/index.ts`
+
+Key types used across both apps:
+
+| Type | Description |
+|------|-------------|
+| `RouterContext` | TanStack Router context shape |
+| `ScanType` | Scan configuration options |
+| `ToastProps` | Notification props |
+| `UserFields` | User profile shape |
+| `BtnProperties` | Button component props |
+| `APIParams` | API request parameter shape |
+| `IssueListData` | Issue list display data |
+
+---
+
+### Shared Utilities
+
+Location: `packages/common/src/utils/`
+
+| File | Contents |
+|------|---------|
+| `common.ts` | `getCookie()`, `setCookie()`, common helpers |
+| `validations.ts` | Zod schemas: email, URL, password rules |
+| `accessibility.ts` | WCAG-related helper functions |
+| `simulator.ts` | Accessibility simulator utilities |
+| `popupUtils.ts` | Modal/popup state helpers |
+| `filterAuditReport.ts` | Report data filtering logic |
+
+---
+
+### Shared Hooks
+
+Location: `packages/common/src/hooks/`
+
+| Hook | Purpose |
+|------|---------|
+| `useReloadBlock` | Prevent page reload during active operations |
+
+---
+
+### Styling in common
+
+The common package doesn't have its own Tailwind config. It relies on the **consuming app's Tailwind** setup. The apps include common's source in their Tailwind content paths:
+
+```javascript
+// apps/full-suite/tailwind.config.js
+content: [
+  "./src/**/*.{js,ts,jsx,tsx}",
+  "../../packages/common/src/components/**/*.{js,ts,jsx,tsx}",
+]
+```
+
+All Tailwind classes used in `common` components must use the `wy-` prefix (set in each app's Tailwind config).
+
+---
+
+## packages/focus-order (`@webyes/focus-order`)
+
+The `focus-order` package is a **standalone accessibility library** that visualises keyboard focus order in web pages. It's published as a dual ESM/CJS npm package.
+
+**Package name:** `@webyes/focus-order`
+**Reference:** `"@webyes/focus-order": "workspace:*"` in app dependencies
+
+---
+
+### What It Does
+
+When called, it:
+1. **Scans the DOM** for all focusable elements (links, buttons, inputs, etc.)
+2. **Supports iframes** — crawls into iframe documents
+3. **Supports Shadow DOM** — finds elements inside shadow roots
+4. **Detects screen-reader-only elements** — flags elements not visually visible
+5. **Renders numbered badges** next to each focusable element
+6. **Draws SVG lines** connecting badges in tab order
+7. **Repositions badges** on scroll and resize
+
+---
+
+### Main Export
+
+```typescript
+import { focusableElementRender } from "@webyes/focus-order"
+
+const { handleRepaint, docsToWatch, focusTargets } = focusableElementRender({
+  doc: document,          // The document to scan
+  excludeClasses: [],     // Optional: CSS classes to ignore
+})
+
+// docsToWatch: all Documents to observe (main + iframes)
+// focusTargets: array of FocusableElementMeta
+// handleRepaint(): call to re-render badges after DOM changes
+```
+
+---
+
+### Types
+
+```typescript
+type FocusableElementMeta = {
+  element: HTMLElement     // The focusable DOM element
+  doc: Document            // The document it lives in
+  label: string            // Display label (text content or aria-label)
+  selector: string         // CSS selector for the element
+  target: string[]         // Connected element selectors
+}
+
+type FocusTarget = {
+  element: HTMLElement
+  doc: Document
+}
+```
+
+---
+
+### Utility Functions
+
+| Function | Purpose |
+|----------|---------|
+| `getFocusableElementsMeta(doc, excludeClasses?)` | Get all focusable elements with metadata |
+| `findFocusableElements(doc, rootElement?, excludeClasses?)` | Find raw focus targets |
+| `createFocusOrderBadgeGlobal(hostDoc, elementDoc, index, element)` | Render a numbered badge |
+| `drawFocusOrderLines(doc)` | Draw SVG connecting lines |
+| `getAllAccessibleDocuments(rootDoc)` | Get all iframe documents |
+| `repositionFocusOrderBadges(doc)` | Update badge positions after scroll/resize |
+| `computeCenterRelativeTo(hostDoc, elementDoc, element)` | Calculate element center point |
+
+---
+
+### Build Output
+
+```
+packages/focus-order/dist/
+├── index.js      # ESM build
+├── index.cjs     # CommonJS build
+└── index.d.ts    # TypeScript declarations
+```
+
+Build command:
+```bash
+pnpm --filter @webyes/focus-order build
+```

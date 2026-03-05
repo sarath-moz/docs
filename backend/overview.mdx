@@ -1,0 +1,246 @@
+---
+title: "Backend Overview"
+description: "FastAPI project structure, startup lifecycle, and configuration system."
+---
+
+## What is the Backend?
+
+The `auditor-backend` is a **FastAPI** application that serves as the single API for both frontend apps (full-suite and a11y). It handles authentication, website management, audit scan orchestration, billing, RUM, reports, and all business logic.
+
+**Tech Stack:**
+- **Framework:** FastAPI (Python 3.12)
+- **ASGI Server:** Uvicorn
+- **ORM:** SQLAlchemy 2 (async)
+- **DB Driver:** asyncpg (PostgreSQL)
+- **Cache:** Redis (aioredis)
+- **Migrations:** Alembic
+- **Config:** pydantic-settings
+- **Auth:** JWT RS256 + Google/Microsoft/Cognito OAuth
+- **Payments:** Stripe
+- **AI:** Google Gemini 2.0 Flash
+- **Monitoring:** OpenTelemetry + Loguru
+
+**Dev URL:** http://localhost:8000
+**API Docs (Swagger):** http://localhost:8000/api/openapi.json
+
+---
+
+## Project Structure
+
+```
+auditor-backend/
+├── auditor_app/
+│   ├── __main__.py              # Entrypoint — runs Uvicorn
+│   ├── settings.py              # All config via env vars
+│   ├── logging.py               # Loguru setup
+│   │
+│   ├── web/
+│   │   ├── application.py       # FastAPI app factory (get_app)
+│   │   ├── lifetime.py          # Startup & shutdown events
+│   │   └── api/
+│   │       ├── router.py        # Master router — mounts all sub-routers
+│   │       ├── auth/            # Auth endpoints
+│   │       ├── user/            # User management
+│   │       ├── website/         # Website CRUD
+│   │       ├── website_audit/   # Scan management
+│   │       ├── accessibility/   # Accessibility data
+│   │       ├── results/         # Audit result retrieval
+│   │       ├── report/          # Report generation
+│   │       ├── solutions/       # AI fix generation
+│   │       ├── stripe/          # Billing (Stripe)
+│   │       ├── organisation/    # Organization management
+│   │       ├── plan/            # Subscription plans
+│   │       ├── uptime_monitor/  # Uptime monitoring
+│   │       ├── search_console/  # Google Search Console
+│   │       ├── scan_schedule/   # Scheduled scans
+│   │       ├── region/          # Audit regions
+│   │       ├── redis/           # Redis utility endpoints
+│   │       ├── monitoring/      # Health check
+│   │       ├── rum/             # Real User Monitoring
+│   │       ├── wy_admin/        # Internal admin
+│   │       ├── offboarding/     # Account offboarding
+│   │       └── utils/           # Misc utilities
+│   │
+│   ├── db/
+│   │   ├── base.py              # SQLAlchemy declarative base
+│   │   ├── dependencies.py      # get_db_session() FastAPI dependency
+│   │   ├── models/              # 30 ORM model classes
+│   │   ├── dao/                 # 35 Data Access Objects
+│   │   └── migrations/          # Alembic migration files
+│   │
+│   ├── services/
+│   │   ├── redis/               # Redis connection lifecycle
+│   │   └── solutions/           # Gemini AI prompt builders
+│   │
+│   └── utils/
+│       ├── jwt_functions.py     # JWT create/verify/refresh
+│       ├── stripe_functions.py  # Stripe API wrappers
+│       ├── aws_functions.py     # S3 / SES operations
+│       ├── email_sms_functions.py # Email sending
+│       ├── common_functions.py  # General helpers
+│       ├── cognito_jwt.py       # AWS Cognito JWT validation
+│       ├── slack_functions.py   # Slack notifications
+│       ├── rate_limiter.py      # SlowAPI limiter
+│       └── user_permission_functions.py # Permission checks
+│
+├── alembic.ini                  # Alembic config
+├── cert/
+│   ├── private.key              # RSA private key (JWT signing)
+│   └── public.key               # RSA public key (JWT verification)
+├── pyproject.toml               # Poetry dependencies
+└── deploy/                      # Deployment configs
+```
+
+---
+
+## Application Startup Lifecycle
+
+When the app starts, it runs these steps **in order**:
+
+```
+python -m auditor_app
+    ↓
+uvicorn.run("auditor_app.web.application:get_app", factory=True)
+    ↓
+get_app() creates FastAPI instance
+    ↓
+On startup event (lifetime.py):
+    1. Create async SQLAlchemy engine (pool_size=20, max_overflow=10)
+    2. Setup OpenTelemetry tracing (if endpoint configured)
+    3. Initialize Redis connection pool
+    4. Warm Redis cache:
+       ├── Load all role → permission mappings
+       ├── Load all accessibility audit rules
+       ├── Load all regions
+       └── Load uptime monitor API tokens
+```
+
+On **shutdown**:
+```
+    1. Dispose database connection pool
+    2. Close Redis connections
+    3. Stop OpenTelemetry instrumentation
+```
+
+---
+
+## Configuration
+
+All settings are driven by **environment variables** (with `AUDITOR_APP_` prefix) and defined in `auditor_app/settings.py` using pydantic-settings.
+
+Copy `.env.sample` to `.env` and fill in values. See the full variable reference in the [dev setup guide](/onboarding/dev-setup).
+
+**Most important variables for local dev:**
+
+```ini
+AUDITOR_APP_HOST=127.0.0.1
+AUDITOR_APP_PORT=8000
+AUDITOR_APP_RELOAD=True                      # Hot reload
+AUDITOR_APP_ENVIRONMENT=dev
+
+# Database
+AUDITOR_APP_DB_HOST=localhost
+AUDITOR_APP_DB_PORT=5432
+AUDITOR_APP_DB_USER=admin
+AUDITOR_APP_DB_PASS=admin
+AUDITOR_APP_DB_BASE=auditor_dev
+
+# Redis
+AUDITOR_APP_REDIS_HOST=localhost
+AUDITOR_APP_REDIS_PORT=6379
+
+# JWT RSA keys
+AUDITOR_APP_PRIVATE_KEY_FILE_PATH=cert/private.key
+AUDITOR_APP_PUBLIC_KEY_FILE_PATH=cert/public.key
+AUDITOR_APP_ALGORITHM=RS256
+```
+
+---
+
+## Middleware Stack
+
+| Middleware | Purpose |
+|-----------|---------|
+| `CORSMiddleware` | Allows all origins, credentials, methods, headers |
+| `SessionMiddleware` | Enables server-side sessions (required for OAuth flows) |
+| SlowAPI integration | Rate limiting on specific endpoints |
+
+---
+
+## Dependency Injection Pattern
+
+FastAPI's `Depends()` is used throughout. Core dependencies:
+
+```python
+# Database session — auto-created and closed per request
+async def get_db_session(request: Request) -> AsyncSession:
+    async with request.app.state.db_session_factory() as session:
+        yield session
+
+# Redis pool
+async def get_redis_pool(request: Request) -> ConnectionPool:
+    return request.app.state.redis_pool
+
+# Authenticated current user (via JWT)
+async def verify_token(authorization: str = Header(...)) -> dict:
+    # Decodes and validates JWT, checks Redis
+    ...
+
+# Same as above but also requires email_verified=True
+async def verify_token_needs_email_verification(...) -> dict:
+    ...
+```
+
+**Usage in routes:**
+```python
+@router.get("/")
+async def get_websites(
+    db: AsyncSession = Depends(get_db_session),
+    redis_pool: ConnectionPool = Depends(get_redis_pool),
+    current_user: dict = Depends(verify_token),
+):
+    ...
+```
+
+---
+
+## DAO Pattern (Data Access Objects)
+
+All database queries go through **DAO classes** in `auditor_app/db/dao/`. Never write SQLAlchemy queries directly in route handlers.
+
+```python
+# Usage in a route handler
+from auditor_app.db.dao.website_dao import WebsiteDAO
+
+@router.get("/")
+async def get_websites(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: dict = Depends(verify_token),
+):
+    websites = await WebsiteDAO().get_by_org_id(
+        db, org_id=current_user["organisation_id"]
+    )
+    return {"success": True, "data": websites}
+```
+
+---
+
+## Running Alembic Migrations
+
+```bash
+cd auditor-backend
+
+# Apply all pending migrations
+poetry run alembic upgrade head
+
+# Create a new migration (after changing models)
+poetry run alembic revision --autogenerate -m "add_website_rum_status"
+
+# Roll back one migration
+poetry run alembic downgrade -1
+
+# Check current migration status
+poetry run alembic current
+```
+
+Migration files live in `auditor_app/db/migrations/versions/`.

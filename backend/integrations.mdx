@@ -1,0 +1,321 @@
+---
+title: "External Integrations"
+description: "AWS, Stripe, Mailersend, Gemini AI, Slack, Uptime Monitor, and RUM — where and how each is used."
+---
+
+## AWS S3 (File Storage)
+
+**Purpose:** Store Lighthouse audit results (JSON), HTML reports, and AI-generated solutions.
+
+**Library:** `boto3`
+
+**Config Variables:**
+```ini
+AUDITOR_APP_AWS_ACCESS_KEY_ID=
+AUDITOR_APP_AWS_SECRET_ACCESS_KEY=
+AUDITOR_APP_AWS_REGION_NAME=
+AUDITOR_APP_AWS_STORAGE_BUCKET_NAME=           # Audit results bucket
+AUDITOR_APP_AWS_S3_URL_EXPIRATION_TIME=120      # Presigned URL TTL (seconds)
+AUDITOR_APP_AWS_S3_SOLUTION_BUCKET_NAME=webyes-issue-solutions
+AUDITOR_APP_AWS_S3_SOLUTION_EXPIRATION_TIME=15552000  # 180 days
+```
+
+**File Structure in S3:**
+```
+{audit_bucket}/
+└── lighthouse/
+    └── {website_audit_id}/
+        └── {page_id}/
+            ├── mobile.json       ← Full Lighthouse JSON result
+            └── desktop.html      ← HTML report
+
+{solution_bucket}/
+└── solutions/
+    └── {issue_id}/
+        └── solution.json         ← AI-generated fix
+```
+
+**Usage in code:** `auditor_app/utils/aws_functions.py`
+
+```python
+# Upload audit result
+await upload_to_s3(bucket, key, json_data)
+
+# Generate presigned download URL
+url = generate_presigned_url(bucket, key, expiry=120)
+```
+
+---
+
+## AWS SES (Transactional Email)
+
+**Purpose:** Send transactional emails (legacy — now mostly replaced by Mailersend/Resend).
+
+**Library:** `boto3` (SESv2)
+
+**Config Variables:**
+```ini
+AUDITOR_APP_AWS_SES_FROM_EMAIL_ADDRESS=
+AUDITOR_APP_AWS_SES_EMAIL_CHARSET=UTF-8
+AUDITOR_APP_AWS_SES_REGION=eu-west-2
+AUDITOR_APP_AWS_SES_ACCESS_KEY_ID=
+AUDITOR_APP_AWS_SES_SECRET_ACCESS_KEY=
+```
+
+**Usage in code:** `auditor_app/utils/aws_functions.py`
+
+---
+
+## Mailersend (Primary Email Service)
+
+**Purpose:** All outgoing transactional emails — OTP verification, scan complete notifications, invites.
+
+**Library:** `mailersend` Python SDK
+
+**Config Variables:**
+```ini
+AUDITOR_APP_MAILERSEND_API_KEY=
+AUDITOR_APP_MAILERSEND_FROM_ADDRESS=
+AUDITOR_APP_MAILERSEND_FROM_NAME=
+AUDITOR_APP_MAILERSEND_COMPANY_NAME=
+AUDITOR_APP_MAILERSEND_OTP_MAIL_TEMPLATE_KEY=       # Template ID for OTP emails
+AUDITOR_APP_MAILERSEND_SCAN_COMPLETED_TEMPLATE_KEY= # Template ID for scan complete
+```
+
+**Emails Sent:**
+| Trigger | Template |
+|---------|---------|
+| Email OTP verification | `otp_mail_template_key` |
+| Scan completed | `scan_completed_template_key` |
+| Team invitation | Dynamic |
+| Password reset | Dynamic |
+
+**Usage in code:** `auditor_app/utils/email_sms_functions.py`
+
+---
+
+## Resend (Email API)
+
+**Purpose:** Alternative email service (used for report emails).
+
+**Config Variables:**
+```ini
+AUDITOR_APP_RESEND_EMAIL_EMAIL_API_URL=https://staging-report.webyes.com/api/v1/email
+AUDITOR_APP_RESEND_EMAIL_EMAIL_API_KEY=
+AUDITOR_APP_RESEND_EMAIL_ACCESSIBILITY_API_URL=
+```
+
+**Usage:** HTTP POST to the API URL with email template data.
+
+---
+
+## Stripe (Payments & Billing)
+
+**Purpose:** Subscription management, checkout, webhooks, transaction history.
+
+**Library:** `stripe` Python SDK
+
+**Config Variables:**
+```ini
+AUDITOR_APP_STRIPE_SECRET_KEY=sk_...
+AUDITOR_APP_STRIPE_PUBLIC_KEY=pk_...
+AUDITOR_APP_ENDPOINT_SECRET=whsec_...       # Webhook signing secret
+AUDITOR_APP_SUCCESS_URL=http://localhost:5173/dashboard/plan-purchase-success?plan=
+AUDITOR_APP_CANCEL_URL=http://localhost:5173/dashboard/plan-purchase-fail
+```
+
+**Key Operations** (`auditor_app/utils/stripe_functions.py`):
+
+| Function | Description |
+|----------|-------------|
+| `create_checkout_session()` | Create hosted Stripe checkout page |
+| `get_subscription_details()` | Fetch current subscription status |
+| `cancel_subscription()` | Set `cancel_at_period_end=True` |
+| `pause_subscription()` | Pause billing |
+| `resume_subscription()` | Resume paused subscription |
+| `get_transaction_list()` | Fetch invoice/payment history |
+
+**Webhook Events Handled** at `POST /api/stripe/webhook`:
+| Event | Action |
+|-------|--------|
+| `customer.subscription.created` | Create `UserPlanPurchase` record |
+| `customer.subscription.updated` | Update subscription status |
+| `customer.subscription.deleted` | Mark subscription as canceled |
+| `invoice.payment_succeeded` | Create `UserSubscriptionLimit`, update credits |
+| `invoice.payment_failed` | Alert user, update status |
+
+**Webhook Verification:**
+```python
+event = stripe.Webhook.construct_event(
+    payload, sig_header, settings.endpoint_secret
+)
+```
+
+<Warning>
+  The webhook endpoint at `/api/stripe/webhook` does **not** require JWT auth — it uses Stripe's signature verification instead. Make sure `ENDPOINT_SECRET` is set correctly.
+</Warning>
+
+---
+
+## Google Gemini AI (Accessibility Solutions)
+
+**Purpose:** Generate AI-powered code fixes for accessibility issues.
+
+**Library:** `google-generativeai`
+
+**Config Variables:**
+```ini
+AUDITOR_APP_GEMINI_API_KEY=
+AUDITOR_APP_GEMINI_MODEL=gemini-2.0-flash
+```
+
+**Flow** (`auditor_app/services/solutions/`):
+
+1. Route `POST /api/solutions/` receives an `IssueObjectDTO`
+2. `AccessibilitySolutions` class selects the right prompt builder:
+   - `prompt_for_image_alt()` — missing alt text on images
+   - `prompt_for_label()` — missing form labels
+   - `prompt_for_aria_required_parent()` — ARIA parent-child issues
+   - `prompt_for_common_issue()` — fallback for any other rule
+3. Prompt is sent to Gemini API
+4. Response is parsed as JSON: `{current_code, correct_code, explanation}`
+5. Result is stored in S3 (`aws_s3_solution_bucket_name`)
+6. Presigned URL returned to frontend (valid for 180 days)
+
+**Response Format:**
+```json
+{
+  "current_code": "<img src='photo.jpg'>",
+  "correct_code": "<img src='photo.jpg' alt='Team photo showing the Webyes office'>",
+  "explanation": "Added descriptive alt text so screen readers can convey the image content."
+}
+```
+
+---
+
+## Slack (Internal Notifications)
+
+**Purpose:** Internal team notifications — new signups, scan completions, errors.
+
+**Library:** `slack-sdk`
+
+**Config Variables:**
+```ini
+AUDITOR_APP_SLACK_WEBHOOK_URL=   # (if used)
+AUDITOR_APP_SLACK_BOT_TOKEN=     # (if used)
+```
+
+**Usage in code:** `auditor_app/utils/slack_functions.py`
+
+```python
+await send_message("🆕 New user signup: user@example.com")
+```
+
+**Events that trigger Slack messages:**
+- New user registration
+- First scan completion
+- Payment events
+
+---
+
+## Google Search Console
+
+**Purpose:** Fetch organic search performance data for scanned websites.
+
+**Library:** `google-auth-oauthlib`, `google-generativeai`
+
+**Config Variables:**
+```ini
+AUDITOR_APP_GOOGLE_CLIENT_ID=
+AUDITOR_APP_GOOGLE_CLIENT_SECRET=
+AUDITOR_APP_GOOGLE_SEARCH_CONSOLE_SCOPE=["https://www.googleapis.com/auth/webmasters.readonly","https://www.googleapis.com/auth/userinfo.email","https://www.googleapis.com/auth/userinfo.profile"]
+AUDITOR_APP_GOOGLE_SEARCH_CONSOLE_REDIRECT_URI=
+```
+
+**OAuth Flow:**
+1. `GET /api/search-console/auth` → Redirect to Google consent
+2. `GET /api/search-console/auth/callback` → Exchange code for tokens
+3. Tokens stored in `SearchConsoleIntegrationSettings` model
+4. `GET /api/search-console/` → Use stored tokens to fetch metrics
+
+---
+
+## Lighthouse Scanner (External Service)
+
+**Purpose:** The actual website crawling and scanning is performed by an **external Lighthouse scanner service**, not within this backend.
+
+**Config Variables:**
+```ini
+AUDITOR_APP_LIGHTHOUSE_SCANNER_API_URL=
+AUDITOR_APP_LIGHTHOUSE_SCANNER_API_KEY=
+AUDITOR_APP_LIGHTHOUSE_SCANNER_MAXIMUM_PAGES=0   # 0 = unlimited
+AUDITOR_APP_LIGHTHOUSE_RESULT_RETURN_URL=         # Webhook URL for scan results
+```
+
+**Scan Flow:**
+```
+1. User triggers scan → POST /api/website-audit/
+2. Backend creates WebsiteAudit record (status=in_progress)
+3. Backend calls Lighthouse Scanner API with:
+   - Website URL + pages to scan
+   - Callback URL (LIGHTHOUSE_RESULT_RETURN_URL)
+4. Scanner crawls website, runs Lighthouse
+5. Scanner POSTs results back to callback URL
+6. Backend saves LighthouseAudit records
+7. Backend stores full JSON in S3
+8. Backend processes accessibility data → AccessibilityAuditLog
+9. WebsiteAudit status → completed
+```
+
+---
+
+## Uptime Monitoring (External Service)
+
+**Purpose:** Monitor website uptime and alert on downtime.
+
+**Config Variables:**
+```ini
+AUDITOR_APP_UPTIME_MONITOR_URL=
+AUDITOR_APP_UPTIME_EMAIL=
+AUDITOR_APP_UPTIME_PASSWORD=
+```
+
+**Usage:** The backend authenticates with the uptime service and creates monitors on behalf of users. Settings stored in `UptimeMonitorSettings` model.
+
+---
+
+## Real User Monitoring (External Service)
+
+**Purpose:** Collect performance metrics from real end-user browsers visiting monitored websites.
+
+**Config Variables:**
+```ini
+AUDITOR_APP_RUM_API_URL=
+AUDITOR_APP_RUM_API_KEY=
+```
+
+**Usage:** The RUM SDK (`VITE_RUM_SDK_URL`) is injected into monitored websites. It sends metrics to `VITE_RUM_ENDPOINT`. The backend fetches and aggregates this data via the RUM API.
+
+---
+
+## OpenTelemetry (Observability)
+
+**Purpose:** Distributed tracing for requests, database queries, and Redis operations.
+
+**Library:** `opentelemetry-sdk`, `opentelemetry-instrumentation-fastapi`
+
+**Config Variable:**
+```ini
+AUDITOR_APP_OPENTELEMETRY_ENDPOINT=http://localhost:4317   # OTLP gRPC endpoint
+```
+
+**Instrumented:**
+- FastAPI HTTP requests (method, path, status, duration)
+- SQLAlchemy queries
+- Redis operations
+
+**Not instrumented (excluded):**
+- Health check endpoint
+- OpenAPI / Swagger endpoints
+
+If `AUDITOR_APP_OPENTELEMETRY_ENDPOINT` is not set, observability is disabled.

@@ -1,90 +1,58 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Webyes Auditor — Developer Docs",
   "colors": {
-    "primary": "#000000",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#15803D",
+    "light": "#22c55e",
+    "dark": "#14532d"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "groups": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "accessibility-widget/introduction",
-          "accessibility-widget/installation"
-        ]
-      },
-      {
-        "group": "Configuration",
-        "pages": [
-          "accessibility-widget/configuration",
-          "accessibility-widget/theming",
-          "accessibility-widget/positioning"
-        ]
-      },
-      {
-        "group": "Features",
-        "pages": [
-          "accessibility-widget/features/overview",
-          "accessibility-widget/features/profiles",
-          "accessibility-widget/features/content",
-          "accessibility-widget/features/color",
-          "accessibility-widget/features/orientation"
+        "tab": "Knowledge Hub",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Onboarding",
+            "pages": [
+              "onboarding/introduction",
+              "onboarding/dev-setup"
+            ]
+          },
+          {
+            "group": "Frontend",
+            "pages": [
+              "frontend/overview",
+              "frontend/full-suite",
+              "frontend/a11y",
+              "frontend/packages",
+              "frontend/patterns"
+            ]
+          },
+          {
+            "group": "Backend",
+            "pages": [
+              "backend/overview",
+              "backend/api-routes",
+              "backend/models",
+              "backend/auth",
+              "backend/integrations"
+            ]
+          }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
   }
 }

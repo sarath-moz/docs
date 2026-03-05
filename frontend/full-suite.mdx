@@ -1,0 +1,259 @@
+---
+title: "full-suite App"
+description: "Deep dive into the main auditing dashboard — routing, state management, API layer, and key components."
+---
+
+## Purpose
+
+The **full-suite** app is the primary Webyes Auditor dashboard. It gives users:
+- Accessibility, performance, SEO, and quality audit results
+- Scan scheduling and history
+- Real User Monitoring (RUM) data
+- Uptime monitoring
+- Team and organization management
+- Subscription billing (Stripe)
+- PDF report generation
+- Google Search Console integration
+
+**Dev URL:** http://localhost:5173
+**Staging:** https://app.staging.webyes.com
+**Production:** https://app.webyes.com
+
+---
+
+## Entry Point
+
+```
+apps/full-suite/src/
+├── main.tsx          ← Mounts React, wraps with BugsnagProvider
+├── App.tsx           ← Creates TanStack Router, passes context
+└── routeTree.gen.ts  ← AUTO-GENERATED — never edit manually
+```
+
+`App.tsx` creates the router and injects context (user email) available to all routes:
+
+```typescript
+const router = createRouter({
+  routeTree,
+  context: { userEmail, setEmail },
+})
+```
+
+---
+
+## Routing Structure
+
+Routes live in `src/routes/`. The folder structure maps directly to URL paths.
+
+### Route Conventions
+
+| Pattern | Meaning |
+|---------|---------|
+| `__root.tsx` | Root layout wrapping every page |
+| `(auth)/` | Route group — no URL segment, groups auth pages |
+| `(protected)/` | Route group — no URL segment, groups gated pages |
+| `_layout.tsx` | Nested layout component |
+| `.lazy.tsx` suffix | Code-split — loaded only when visited |
+| `$metrics` in filename | Dynamic URL parameter |
+
+### Full Route Map
+
+**Public Routes**
+| File | URL | Description |
+|------|-----|-------------|
+| `index.tsx` | `/` | Home / redirect |
+| `no-permission.tsx` | `/no-permission` | Access denied page |
+
+**Auth Routes `(auth)/`**
+| File | URL | Description |
+|------|-----|-------------|
+| `login.tsx` | `/login` | Email/password login |
+| `signUp.tsx` | `/sign-up` | New account registration |
+| `resetPassword.tsx` | `/reset-password` | Password reset flow |
+| `account-verification.tsx` | `/account-verification` | Email OTP verification |
+| `confirm-google-signup.tsx` | `/confirm-google-signup` | Google OAuth confirmation |
+| `confirm-microsoft-signup.tsx` | `/confirm-microsoft-signup` | Microsoft OAuth confirmation |
+| `trial.tsx` | `/trial` | Free trial signup |
+| `verify-token.tsx` | `/verify-token` | Token-based verification |
+
+**Protected Dashboard Routes `(protected)/_layout/dashboard/`**
+| File | URL | Description |
+|------|-----|-------------|
+| `index.lazy.tsx` | `/dashboard` | Dashboard home — website list |
+| `setup.lazy.tsx` | `/dashboard/setup` | New website setup wizard |
+| `plans.tsx` | `/dashboard/plans` | Subscription plan selection |
+| `scanning-progress.lazy.tsx` | `/dashboard/scanning-progress` | Live scan progress view |
+| `scan-history.lazy.tsx` | `/dashboard/scan-history` | Historical scan list |
+| `scan-customisation.lazy.tsx` | `/dashboard/scan-customisation` | Scan configuration |
+| `search-console.tsx` | `/dashboard/search-console` | Google Search Console |
+| `google-verification.tsx` | `/dashboard/google-verification` | Domain ownership verification |
+| `integration.tsx` | `/dashboard/integration` | Third-party integrations |
+| `simulator.tsx` | `/dashboard/simulator` | Accessibility simulator |
+| `plan-purchase-success.tsx` | `/dashboard/plan-purchase-success` | Stripe checkout success |
+| `plan-purchase-fail.lazy.tsx` | `/dashboard/plan-purchase-fail` | Stripe checkout failure |
+| `accessibility/index.lazy.tsx` | `/dashboard/accessibility` | Accessibility audit results |
+| `performance.lazy.tsx` | `/dashboard/performance` | Performance metrics |
+| `quality.lazy.tsx` | `/dashboard/quality` | Code quality issues |
+| `seo.lazy.tsx` | `/dashboard/seo` | SEO analysis |
+| `uptime.lazy.tsx` | `/dashboard/uptime` | Uptime monitoring |
+| `totalIssueList.lazy.tsx` | `/dashboard/total-issue-list` | All issues combined |
+| `totalPageIssue.lazy.tsx` | `/dashboard/total-page-issue` | Issues by page |
+| `pages.$metrics.tsx` | `/dashboard/pages/:metrics` | Pages grouped by metric |
+| `issueList.$metrics.tsx` | `/dashboard/issue-list/:metrics` | Issues by category |
+| `check-list.$metrics.tsx` | `/dashboard/check-list/:metrics` | Checklist by metric |
+| `affected-pages.$metrics.tsx` | `/dashboard/affected-pages/:metrics` | Affected pages |
+| `affected-pages_.$metrics.page-wise-issue.tsx` | `/dashboard/affected-pages/:metrics/page-wise-issue` | Page-specific issues |
+
+**RUM Routes `(protected)/_layout/dashboard/rum/`**
+| File | URL | Description |
+|------|-----|-------------|
+| `index.lazy.tsx` | `/dashboard/rum` | RUM overview |
+| `page.tsx` | `/dashboard/rum/page` | Single page RUM details |
+| `rum-settings.tsx` | `/dashboard/rum/rum-settings` | RUM configuration |
+| `onboarding/index.lazy.tsx` | `/dashboard/rum/onboarding` | RUM setup wizard |
+
+**Settings Routes `(protected)/_layout/settings/`**
+| File | URL | Description |
+|------|-----|-------------|
+| `general-settings.tsx` | `/settings/general-settings` | General preferences |
+| `profile.tsx` | `/settings/profile` | User profile |
+| `team.tsx` | `/settings/team` | Team members |
+| `organisation.tsx` | `/settings/organisation` | Organization details |
+| `billing.tsx` | `/settings/billing` | Subscription & invoices |
+| `_settings_layout/index.tsx` | `/settings/website-settings` | Website-level settings |
+| `_settings_layout/accessibility.lazy.tsx` | `/settings/website-settings/accessibility` | Accessibility scan config |
+| `_settings_layout/uptime.lazy.tsx` | `/settings/website-settings/uptime` | Uptime monitoring config |
+
+**Off-boarding Routes**
+| File | URL | Description |
+|------|-----|-------------|
+| `off-boarding/index.tsx` | `/off-boarding` | Account cancellation home |
+| `off-boarding/cancel-plan.tsx` | `/off-boarding/cancel-plan` | Plan cancellation flow |
+
+---
+
+## State Management
+
+### Client State (Zustand)
+Location: `src/store/client/`
+
+| Store | File | What it holds |
+|-------|------|---------------|
+| `useScan` | `scan.ts` | Active scan schedule state |
+| `useDialogue` | `dialogue.ts` | Dialog/modal open states |
+| `useAuditResult` | `auditResult.ts` | Cached audit result data |
+| `useSolutions` | `solutions.ts` | AI-generated solution data |
+| `useTidio` | `tidioHandle.ts` | Tidio chat widget state |
+| `useBilling` | `billing.ts` | Billing flow state |
+| `useUtilKeys` | `utilKeys.ts` | Utility key state |
+| `useRum` | `rum.ts` | RUM config and filters |
+
+**Store Pattern:**
+```typescript
+import { create } from "zustand"
+
+interface ScanState {
+  scheduleScan: ScanScheduleResponse | null
+}
+interface ScanActions {
+  setScheduleScan: (v: ScanScheduleResponse | null) => void
+}
+
+const useScan = create<ScanState & ScanActions>((set) => ({
+  scheduleScan: null,
+  setScheduleScan: (scheduleScan) => set({ scheduleScan }),
+}))
+
+export default useScan
+```
+
+### Server State (TanStack Query)
+Location: `src/store/server/features/`
+
+| Feature | Files | Key Hooks |
+|---------|-------|-----------|
+| `scan/` | `queries.ts`, `mutate.ts` | `useScanHistory`, `useGetScanSchedule` |
+| `websites/` | `queries.ts` | `useWebsiteList`, `useAllWebsites`, `useWebsiteScanningStatus` |
+| `issues/` | `queries.ts` | Issue data hooks |
+| `accessibility/` | `queries.ts` | A11y audit data |
+| `performance/` | `queries.ts` | Performance metrics |
+| `report/` | `queries.ts` | Report generation |
+| `billing/` | `queries.ts`, `mutation.ts` | Billing data & checkout |
+| `general-settings/` | `queries.ts`, `mutation.ts` | App-wide settings |
+| `organisation/` | `query.ts` | Organization data |
+| `region/` | `query.ts` | Region/geo data |
+| `uptime-monitor/` | `queries.ts` | Uptime data |
+| `off-boarding/` | `mutate.ts` | Account deletion |
+| `users/` | `queries.ts` | User profile & auth state |
+
+---
+
+## API Layer
+
+**Config:** `src/lib/api.ts`
+```typescript
+const API_URL = import.meta.env.VITE_API_URL
+// All requests → Bearer token from "access_token" cookie
+```
+
+**Service files** live in `src/model/`:
+
+| File | Responsibility |
+|------|---------------|
+| `service.ts` | `readUserMe()` — fetch current user |
+| `website.ts` | Website CRUD, scan history, scan scheduling |
+| `auditReport.ts` | Audit data fetching and report generation |
+| `accessibility.ts` | WCAG scan result data |
+| `pdfService.ts` | Single-page PDF export |
+| `pdf-all-report.ts` | Full-site PDF batch export |
+| `billing.ts` | Stripe checkout, subscription management |
+| `searchConsole.ts` | Google Search Console API |
+| `organisation.ts` | Org creation and management |
+| `generalSettings.ts` | User and app settings |
+| `uptime-monitor.ts` | Uptime check data |
+| `rum.ts` | RUM metrics and config |
+| `websiteAuditSettings.ts` | Per-website scan configuration |
+| `solutions.ts` | Gemini AI-powered fix suggestions |
+
+---
+
+## Authentication Hook
+
+`src/hooks/useAuth.tsx`:
+```typescript
+const { currentUser } = useAuth()
+// currentUser: User | null
+// isLoggedIn(): boolean — checks for access_token cookie
+```
+
+---
+
+## Environment Variables
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `VITE_API_URL` | Backend base URL | `https://api.staging.webyes.com/` |
+| `VITE_REPORT_URL` | Report service URL | `https://staging-report.webyes.com` |
+| `VITE_MARKETING_URL` | Marketing site URL | `https://staging-audit.webyes.com` |
+| `VITE_DOMAIN` | Cookie domain | `.staging.webyes.com` |
+| `VITE_RUM_ENDPOINT` | RUM data collection URL | _(staging value)_ |
+| `VITE_RUM_SDK_URL` | RUM SDK source URL | _(staging value)_ |
+| `VITE_SUITE_APP_URL` | full-suite public URL | `https://app.staging.webyes.com` |
+| `VITE_A11Y_APP_URL` | a11y public URL | `https://accessibility.staging.webyes.com/` |
+| `VITE_BUGSNAG_API_KEY` | Error tracking key | _(ask team lead)_ |
+
+---
+
+## Analytics & Monitoring
+
+Injected by the custom `injectTags()` Vite plugin in `vite.config.ts`. **Only active in staging/production builds**, never in `dev` mode.
+
+| Tool | Purpose | Environment |
+|------|---------|-------------|
+| Mixpanel | User behaviour analytics | Staging + Production |
+| Google Tag Manager | Tag management | Production |
+| Intercom | In-app support chat | Staging + Production |
+| Hotjar | Session recordings + heatmaps | Production |
+| PostHog | Product analytics | Production |
+| Bugsnag | Error tracking | All |
+| CookieYes | Cookie consent | Staging + Production |

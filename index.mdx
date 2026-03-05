@@ -1,97 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Developer Knowledge Hub"
+description: "Everything a new developer needs to understand the Webyes Auditor platform — architecture, workflows, and component responsibilities."
 ---
 
-## Setting up
+## Welcome to the Webyes Auditor Docs
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+This knowledge hub covers the full platform: two React frontend apps, a shared component library, an accessibility focus-order package, and a FastAPI backend.
 
 <Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+  <Card title="New here? Start with Onboarding" icon="rocket" href="/onboarding/introduction">
+    Get your local environment running in under 30 minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="System Architecture" icon="sitemap" href="/architecture">
+    Understand how all the pieces fit together.
   </Card>
 </Columns>
 
-## Create beautiful pages
+---
 
-Everything you need to create world-class documentation.
+## Frontend
 
 <Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+  <Card title="Monorepo Overview" icon="folder-tree" href="/frontend/overview">
+    pnpm workspaces, apps, packages, tooling.
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="full-suite App" icon="browser" href="/frontend/full-suite">
+    The main auditing dashboard — routing, state, API layer.
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="a11y App" icon="universal-access" href="/frontend/a11y">
+    The standalone accessibility app and how it differs.
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="Shared Packages" icon="boxes-stacked" href="/frontend/packages">
+    common UI library and @webyes/focus-order explained.
+  </Card>
+  <Card title="Patterns & Conventions" icon="code" href="/frontend/patterns">
+    Router, state, forms, styling — the standard way to do things.
   </Card>
 </Columns>
 
-## Need inspiration?
+---
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Backend
+
+<Columns cols={2}>
+  <Card title="Backend Overview" icon="server" href="/backend/overview">
+    FastAPI project structure, entrypoint, and config.
+  </Card>
+  <Card title="API Routes" icon="route" href="/backend/api-routes">
+    Every endpoint, method, path, and purpose.
+  </Card>
+  <Card title="Database Models" icon="database" href="/backend/models">
+    SQLAlchemy models, fields, and relationships.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/backend/auth">
+    JWT RS256 flow, OAuth providers, cookie handling.
+  </Card>
+  <Card title="External Integrations" icon="plug" href="/backend/integrations">
+    AWS, Stripe, Mailersend, Gemini AI, Slack and more.
+  </Card>
+</Columns>

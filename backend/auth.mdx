@@ -1,0 +1,312 @@
+---
+title: "Authentication & Authorization"
+description: "JWT RS256 flow, OAuth providers (Google, Microsoft, Cognito), and the permission system."
+---
+
+## Overview
+
+The backend uses **three authentication mechanisms**:
+
+| Method | Use Case |
+|--------|---------|
+| **JWT RS256** | Primary auth — email/password login |
+| **Google OAuth** | Sign in with Google + Search Console |
+| **Microsoft OAuth** | Sign in with Microsoft (enterprise) |
+| **AWS Cognito** | Central auth portal (auth.webyes.com) |
+
+All methods ultimately produce the same **local JWT access token** that subsequent API calls use.
+
+---
+
+## JWT Authentication (Primary)
+
+### Key Pair
+
+The backend signs tokens with an **RSA private key** and verifies them with the **public key**:
+
+```
+cert/private.key   ← Signs new tokens (kept secret)
+cert/public.key    ← Verifies incoming tokens (can be public)
+```
+
+**Algorithm:** RS256 (RSASSA-PKCS1-v1_5 with SHA-256)
+
+Generate keys for local development:
+```bash
+openssl genrsa -out cert/private.key 2048
+openssl rsa -in cert/private.key -pubout -out cert/public.key
+```
+
+### Token Structure
+
+```json
+{
+  "id": "user-uuid",
+  "email": "user@example.com",
+  "organisation_id": "org-uuid",
+  "user_role_id": "role-uuid",
+  "is_suit_access": true,
+  "email_verified": true,
+  "exp": 1234567890,
+  "iat": 1234567890
+}
+```
+
+### Token Lifecycle
+
+```
+POST /api/auth/login
+  → Validate email/password against DB
+  → Generate JWT (signed with private key)
+  → Store token in Redis: SET token_{jwt} "1" EX {ttl_seconds}
+  → Store user→token mapping: SET user_token_{user_id}_{org_id}_{suit}_{uuid} {jwt} EX {ttl}
+  ← Return {access_token, user_data}
+
+Subsequent requests:
+  → Client sends: Authorization: Bearer {access_token}
+  → verify_token dependency:
+      1. Decode JWT with public key
+      2. Check exp > now
+      3. Check Redis: GET token_{jwt} → must exist
+      4. Return decoded payload
+
+POST /api/auth/logout
+  → DEL token_{jwt} from Redis
+  ← Token is immediately invalid
+```
+
+### Token Expiry
+
+Configured via env vars:
+```ini
+AUDITOR_APP_ACCESS_TOKEN_EXPIRE_MINUTES=10080   # 7 days
+AUDITOR_APP_REFRESH_TOKEN_EXPIRE_MINUTES=10080  # 7 days
+```
+
+### FastAPI Dependencies
+
+```python
+# Require valid token
+async def verify_token(authorization: str = Header(...)) -> dict:
+    ...
+
+# Require valid token AND email_verified=True
+async def verify_token_needs_email_verification(...) -> dict:
+    ...
+```
+
+Usage in route handlers:
+```python
+@router.get("/")
+async def protected_endpoint(
+    current_user: dict = Depends(verify_token)
+):
+    user_id = current_user["id"]
+    org_id = current_user["organisation_id"]
+    ...
+```
+
+---
+
+## Email/Password Login Flow
+
+```
+1. User: POST /api/auth/login {email, password}
+2. Backend: Fetch user by email from DB
+3. Backend: Bcrypt verify password against stored hash
+4. Backend: Check user_status == "active"
+5. Backend: Create JWT (signed with RSA private key)
+6. Backend: Store JWT in Redis with TTL
+7. Backend: ← Return {access_token, ...}
+8. Frontend: Store token (cookie: access_token)
+9. Frontend: All subsequent requests include Authorization: Bearer {token}
+```
+
+---
+
+## Email Verification
+
+New accounts require email verification before accessing protected features:
+
+```
+1. POST /api/user/verify-email/ {email}
+   → Generate OTP code
+   → Send OTP via Mailersend
+
+2. POST /api/user/verify-email-otp/ {email, otp}
+   → Validate OTP
+   → Set user.email_verified = True
+
+Alternative — link-based:
+1. POST /api/user/verify-email/ {email}
+   → Generate verification_token
+   → Send link: {AUDITOR_APP_EMAIL_VERIFICATION_LINK}?token={verification_token}
+
+2. POST /api/user/verify-email-link/ {verification_token}
+   → Validate token
+   → Set user.email_verified = True
+```
+
+---
+
+## Google OAuth
+
+### Sign in with Google
+
+```
+1. GET /api/auth/google-auth
+   → Redirect to: https://accounts.google.com/o/oauth2/auth?...
+   → Scopes: openid profile email
+
+2. Google: User authenticates
+
+3. GET /api/auth/google-auth/callback?code=...
+   → Exchange code for tokens using Authlib
+   → Fetch user info (email, name, picture)
+   → Create/find local user
+   → Generate local JWT
+   ← Redirect to {AUDITOR_APP_GOOGLE_AUTH_TOKEN_REDIRECT_URL}?token=...
+
+4. Frontend: Receive token from URL, store as cookie
+```
+
+### Google Search Console Integration
+
+```
+1. GET /api/search-console/auth
+   → Redirect to Google OAuth with webmasters.readonly scope
+
+2. GET /api/search-console/auth/callback?code=...
+   → Exchange code for access + refresh tokens
+   → Store in SearchConsoleIntegrationSettings
+
+3. GET /api/search-console/
+   → Use stored tokens to fetch Search Console data for website
+```
+
+---
+
+## Microsoft OAuth
+
+```
+1. GET /api/auth/microsoft-auth
+   → Redirect to: https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize
+   → Scopes: openid profile email User.Read
+
+2. Microsoft: User authenticates
+
+3. GET /api/auth/microsoft-auth/callback?code=...
+   → Exchange code for ID token
+   → Validate ID token using JWKS from microsoft_auth_jwks_url
+   → Extract email, name from token claims
+   → Create/find local user
+   → Generate local JWT
+   ← Redirect to {AUDITOR_APP_MICROSOFT_AUTH_TOKEN_REDIRECT_URL}?token=...
+```
+
+---
+
+## AWS Cognito Auth
+
+Used when users authenticate via the **auth.webyes.com** portal:
+
+```
+1. User authenticates on Cognito portal (auth.webyes.com)
+2. Cognito issues JWT (ID token, RS256 signed)
+
+3. Frontend: POST /api/auth/provision-user
+   Headers: Authorization: Bearer {cognito_id_token}
+
+4. Backend:
+   → Fetch Cognito JWKS from:
+     https://cognito-idp.{region}.amazonaws.com/{pool_id}/.well-known/jwks.json
+   → Validate JWT signature
+   → Extract email from claims
+   → Create/find local user in DB
+   → Create local organisation if new user
+   → Generate local JWT (RS256)
+   ← Return {access_token, ...}
+```
+
+Configuration:
+```ini
+AUDITOR_APP_COGNITO_REGION=eu-west-1
+AUDITOR_APP_COGNITO_USER_POOL_ID=eu-west-1_xxxxxxxx
+AUDITOR_APP_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+---
+
+## Permission System
+
+### Architecture
+
+```
+UserRole (owner, editor, viewer...)
+  ↓ (many-to-many via PermissionUserRoleMapping)
+Permission (slug-based: "settings:website:add")
+```
+
+### Permission Slugs
+
+Format: `scope:resource:action`
+
+| Slug | Description |
+|------|-------------|
+| `settings:website:add` | Add websites |
+| `settings:website:delete` | Delete websites |
+| `settings:website:transfer` | Transfer websites |
+| `settings:team:add` | Invite team members |
+| `scan:full_scan:add` | Start audit scans |
+| `settings:organisation:edit` | Edit organisation |
+
+### Redis Cache
+
+On startup, all role→permission mappings are cached in Redis:
+```
+Key: permission_user_role_mapping_{role_id}
+Value: JSON array of permission slugs
+TTL: Persistent (cleared on restart)
+```
+
+### Permission Check
+
+```python
+await check_permission(
+    user_role_id=current_user["user_role_id"],
+    permission_slug="settings:website:add",
+    redis_pool=redis_pool
+)
+# → Raises HTTPException(403) if slug not in cached permissions
+```
+
+Used in route handlers **in addition to** `verify_token`:
+
+```python
+@router.post("/")
+async def add_website(
+    data: WebsiteModelInputDTO,
+    db: AsyncSession = Depends(get_db_session),
+    redis_pool = Depends(get_redis_pool),
+    current_user: dict = Depends(verify_token),
+):
+    await check_permission(current_user["user_role_id"], "settings:website:add", redis_pool)
+    # → proceed with adding website
+```
+
+---
+
+## Rate Limiting
+
+Sensitive endpoints are rate-limited via **SlowAPI** (10 requests/minute per IP):
+
+| Endpoint | Limit |
+|----------|-------|
+| `POST /api/auth/login` | 10/min |
+| `POST /api/user/` | 10/min |
+| `POST /api/user/verify-email/` | 10/min |
+| `POST /api/user/verify-email-otp/` | 10/min |
+| `POST /api/user/verify-email-link/` | 10/min |
+| `POST /api/user/invite-user/` | 10/min |
+
+On exceeding the limit: `HTTP 429 Too Many Requests`

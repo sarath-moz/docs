@@ -1,0 +1,366 @@
+---
+title: "Database Models"
+description: "All 30 SQLAlchemy models — fields, types, relationships, and table names."
+---
+
+All models use **async SQLAlchemy 2** with **PostgreSQL**. UUIDs are used as primary keys throughout. Timestamps (`created_time`, `updated_time`) are always stored in UTC.
+
+---
+
+## Users & Access Control
+
+### User (`user_account`)
+
+The central entity — every person who logs in.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | Auto-generated |
+| `email` | str(200) | Unique |
+| `first_name` | str(200) | |
+| `last_name` | str(200) | |
+| `phone_number` | str(30) | |
+| `password` | str(200) | Bcrypt hashed |
+| `password_salt` | str(200) | |
+| `user_type` | Enum | `webowner` \| `agencyowner` \| `other` |
+| `email_verified` | bool | Default `False` |
+| `pdf_settings` | JSONB | `{"color": null, "logo": null}` |
+| `user_status` | Enum | `active` \| `inactive` \| `marked_for_delete` \| `archived` \| `expired` \| `canceled` \| `activation_link_sent` |
+| `scan_credits` | int | Default 50 |
+| `source` | JSONB | Signup source metadata |
+| `is_trial` | bool | Default `False` |
+| `is_trial_accessibility` | bool | Default `False` |
+| `trial_plan_id` | UUID FK → `plan.id` | Nullable |
+| `trial_plan_id_accessibility` | UUID FK → `plan.id` | Nullable |
+| `is_from_suit` | bool | Default `True` (`True` = full-suite, `False` = a11y) |
+| `signup_source` | str(200) | Nullable |
+| `created_time` | DateTime | UTC |
+| `updated_time` | DateTime | UTC, auto-update |
+
+---
+
+### Organisation (`organisation`)
+
+Groups users and websites together.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `organisation_name` | str(200) | |
+| `audit_max_number_of_pages` | SmallInt | Nullable — plan limit |
+| `status` | Enum | `active` \| `inactive` \| `marked_for_delete` \| `archived` \| `expired` \| `canceled` |
+| `created_user_id` | UUID FK → `user_account.id` | |
+| `updated_user_id` | UUID FK → `user_account.id` | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### UserOrganisationMapping (`user_organisation_mapping`)
+
+Many-to-many: users ↔ organisations, with a role per membership.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `organisation_id` | UUID FK → `organisation.id` | Indexed |
+| `user_id` | UUID FK → `user_account.id` | Indexed |
+| `user_role_id` | UUID FK → `user_role.id` | Indexed |
+| `status` | Enum | Active/inactive etc. |
+| `created_user_id` / `updated_user_id` | UUID FK | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### UserRole (`user_role`)
+
+Named roles (owner, editor, viewer, etc.) with a hierarchy level.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `user_role_name` | str(200) | Unique (e.g., `owner`, `editor`, `viewer`) |
+| `level` | str(200) | Hierarchy level |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### Permission (`permission`)
+
+Granular permission slugs.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `permission_type` | Enum | `account` \| `wy_account` |
+| `slug` | str(500) | Indexed — e.g., `settings:website:add`, `scan:full_scan:add` |
+
+---
+
+### PermissionUserRoleMapping (`permission_user_role_mapping`)
+
+Maps permissions to roles (many-to-many).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `user_role_id` | UUID FK → `user_role.id` | |
+| `permission_id` | UUID FK → `permission.id` | |
+| `permission_type` | Enum | `account` \| `wy_account` |
+
+---
+
+## Websites & Audits
+
+### Website (`website`)
+
+A website registered by a user for auditing.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `organisation_id` | UUID FK → `organisation.id` | Indexed |
+| `website_url` | str(2000) | Indexed |
+| `website_name` | str(2000) | Nullable |
+| `is_from_suit` | bool | Default `True` |
+| `status` | Enum | active / inactive / etc. |
+| `region_id` | UUID FK → `region.id` | Nullable — scan server location |
+| `throttling` | JSONB | `{"mobile": "slow4g", "desktop": "fast4g"}` |
+| `scan_limit` | int | Nullable — plan-imposed limit |
+| `enable_aaa` | bool | Nullable — enable WCAG AAA checks |
+| `rum_status` | str(2000) | Nullable |
+| `created_user_id` / `updated_user_id` | UUID FK | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### WebsiteAudit (`website_audit`)
+
+A single scan run. Contains config and timing.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `website_id` | UUID FK → `website.id` | Indexed |
+| `json_include_links` | JSONB | URL patterns to include |
+| `json_exclude_links` | JSONB | URL patterns to exclude |
+| `max_number_of_pages` | SmallInt | Default 0 (unlimited) |
+| `audit_start_time` | DateTime | Indexed |
+| `audit_end_time` | DateTime | Indexed, nullable |
+| `scan_type` | Enum | `quick` \| `full` \| `custom` |
+| `rescan_audit_id` | UUID | Nullable — original audit if this is a rescan |
+| `region_id` | UUID FK → `region.id` | Nullable |
+| `throttling` | JSONB | Network throttling config |
+| `json_audit_list` | JSONB | `[audit_types, standards]` |
+| `is_from_suit` | bool | Default `True` |
+| `is_scheduled_scan` | bool | Default `False` |
+| `status` | Enum | `scheduled` \| `in_progress` \| `completed` \| `failed` \| `canceled` |
+| `total_credits_used` | SmallInt | Nullable |
+| `created_user_id` / `updated_user_id` | UUID FK | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### WebsitePage (`website_page`)
+
+Individual pages discovered and scanned during an audit.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `website_id` | UUID FK → `website.id` | Indexed |
+| `website_audit_id` | UUID FK → `website_audit.id` | Indexed, nullable |
+| `page_title` | str(2000) | |
+| `page_url` | str(2000) | |
+| `page_order` | int | Position in crawl order |
+| `status` | Enum | `active` \| `inactive` \| `marked_for_deletion` |
+| `created_user_id` / `updated_user_id` | UUID FK | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### LighthouseAudit (`lighthouse_audit`)
+
+Results from a Lighthouse scan on a single page.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `website_audit_id` | UUID FK → `website_audit.id` | Indexed |
+| `website_page_id` | UUID FK → `website_page.id` | Indexed |
+| `audit_device` | Enum | `mobile` \| `desktop` |
+| `result_json_s3_url` | str(2000) | S3 path to full result JSON |
+| `html_s3_url` | str(2000) | Nullable — S3 path to HTML report |
+| `result_json` | JSONB | Full Lighthouse result |
+| `performance_score` | float | 0.0 – 1.0 |
+| `accessibility_score` | float | 0.0 – 1.0 |
+| `best_practices_score` | float | 0.0 – 1.0 |
+| `seo_score` | float | 0.0 – 1.0 |
+| `average_response_time` | float | Milliseconds |
+| `screenshot` | JSONB | Nullable |
+| `audit_start_time` / `audit_end_time` | DateTime | |
+
+---
+
+### AccessibilityAuditMaster (`accessibility_audit_master`)
+
+Reference table of all WCAG/ADA accessibility rules. Pre-populated, cached in Redis on startup.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `rule_id` | str(200) | Indexed — Axe rule ID (e.g., `aria-allowed-attr`) |
+| `standard_code` | str(20) | Indexed — e.g., `2.4.6` |
+| `wcag_version_number` | str(20) | Indexed — e.g., `2.2` |
+| `wcag_level` | str(20) | Indexed — `A` \| `AA` \| `AAA` |
+| `is_ada` | bool | Indexed |
+| `is_section_508` | bool | Indexed |
+| `is_eaa` | bool | Indexed |
+| `audit_data_json` | JSONB | `{description, help, helpUrl}` |
+| `standard_list_json` | JSONB | `["wcag2.2", "ADA"]` |
+| `affected_disabilities_json` | JSONB | `["blind", "lowVision", "cognitive"]` |
+| `issue_severity` | str(20) | `critical` \| `serious` \| `moderate` \| `minor` |
+| `wcag_headers_json` | JSONB | Nullable |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### AccessibilityAuditLog (`accessibility_audit_log`)
+
+Per-page processed accessibility results.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `light_house_audit_id` | UUID FK → `lighthouse_audit.id` | Indexed |
+| `audit_data_json` | JSONB | Raw Axe data |
+| `audit_data_filtered_json` | JSONB | Filtered issues |
+| `filtered_issue_rule_ids` | JSONB | Array of issue rule IDs |
+| `wcag_2a_score` | float | |
+| `wcag_2aa_score` | float | |
+| `wcag_2aaa_score` | float | |
+| `ada_score` | float | |
+| `created_time` | DateTime | UTC |
+
+---
+
+### AuditIssueList (`audit_issue_list`)
+
+Individual accessibility issues found in a scan.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `website_id` | UUID FK → `website.id` | Indexed |
+| `lighthouse_audit_id` | UUID FK → `lighthouse_audit.id` | Indexed |
+| `issue_category` | str(200) | |
+| `issue_content_json` | JSONB | Issue details |
+| `issue_severity` | str(200) | |
+| `issue_id` | str(200) | Rule ID |
+| `issue_title` | str(2000) | |
+| `standard_code` | str(20) | Nullable |
+| `status` | Enum | `new` \| `assigned` \| `in_progress` \| `completed` \| `canceled` |
+| `created_user_id` / `updated_user_id` | UUID FK | |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+## Billing & Subscriptions
+
+### Plan (`plan`)
+
+Available subscription plans.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `name` | str(200) | Display name |
+| `slug` | str(200) | Indexed — e.g., `free`, `pro_monthly`, `bulk_yearly` |
+| `price` | float | |
+| `currency` | str(200) | |
+| `stripe_plan_id` | str(200) | Indexed, nullable |
+| `stripe_product_id` | str(200) | Nullable |
+| `recurrance` | str(200) | Nullable — `monthly` \| `yearly` |
+| `scan_limit` | int | Nullable = unlimited |
+| `website_limit` | int | Nullable = unlimited |
+| `user_limit` | int | Nullable = unlimited |
+| `plan_validity` | int | Days |
+| `features` | JSONB | Feature flags |
+| `is_suit_access` | bool | Nullable |
+| `status` | Enum | `active` \| `inactive` |
+| `created_time` / `updated_time` | DateTime | UTC |
+
+---
+
+### UserPlanPurchase (`user_plan_purchase`)
+
+Records every plan purchase/subscription.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `user_id` | UUID FK → `user_account.id` | Indexed |
+| `plan_id` | UUID FK → `plan.id` | Indexed |
+| `user_stripe_account_id` | UUID FK → `user_stripe_account.id` | Indexed, nullable |
+| `purchase_date` | DateTime | Indexed |
+| `plan_expiry_date` | DateTime | Indexed, nullable |
+| `price` | float | Nullable |
+| `currency` | str(10) | Nullable |
+| `stripe_invoice_id` | str(200) | Indexed, nullable |
+| `stripe_subscription_id` | str(200) | Nullable |
+| `is_auto_renew` | bool | Default `False` |
+| `auto_renew_date` / `auto_renew_status` | DateTime / bool | |
+| `stripe_json` | JSONB | Full Stripe event data |
+| `is_trial` | bool | Default `False` |
+| `cancellation_date` | DateTime | Nullable |
+| `status` | Enum | active / expired / canceled etc. |
+
+---
+
+### UserStripeAccount (`user_stripe_account`)
+
+Stripe customer record per user.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `user_id` | UUID FK → `user_account.id` | Indexed |
+| `stripe_customer_id` | str(100) | Stripe Customer ID |
+| `billing_email` | str(100) | Nullable |
+| `preferred_currency` | str(10) | Nullable |
+| `pm_type` | str(10) | Nullable — e.g., `card` |
+| `pm_last_four` | str(4) | Nullable |
+| `status` | Enum | |
+
+---
+
+### UserSubscriptionLimit (`user_subscription_limit`)
+
+Tracks credit/scan usage per billing period.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID (PK) | |
+| `user_id` | UUID FK | Indexed |
+| `user_plan_purchase_id` | UUID FK | Indexed |
+| `from_date` / `to_date` | Date | Billing period, Indexed |
+| `credits_limit` | SmallInt | |
+| `status` | Enum | |
+
+---
+
+## Other Models
+
+| Model | Table | Purpose |
+|-------|-------|---------|
+| `UserVerificationToken` | `user_verification_token` | Email verification tokens |
+| `UserInvitation` | `user_invitation` | Pending org invites |
+| `UserBannerLog` | `user_banner_log` | Dismissed announcement banners |
+| `Region` | `region` | Scan server regions (pre-populated, Redis cached) |
+| `ScanSchedule` | `scan_schedule` | Recurring scan configs |
+| `UptimeMonitorSettings` | `uptime_monitor_settings` | Per-website uptime monitors |
+| `SearchConsoleIntegrationSettings` | `search_console_integration_settings` | Google Search Console OAuth tokens |
+| `IssueSolution` | `issue_solution` | AI-generated fix suggestions (cached in S3) |
+| `OffboardingReason` | `offboarding_reason` | Cancellation feedback |
+| `PausedSubscription` | `paused_subscription` | Subscription pause history |
+| `Settings` | `settings` | Global app settings |
+| `UserNotification` | `user_notification` | Notification preferences |
