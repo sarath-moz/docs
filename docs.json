@@ -11,42 +11,37 @@
   "navigation": {
     "groups": [
       {
-        "tab": "Knowledge Hub",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": [
-              "index",
-              "architecture"
-            ]
-          },
-          {
-            "group": "Onboarding",
-            "pages": [
-              "onboarding/introduction",
-              "onboarding/dev-setup"
-            ]
-          },
-          {
-            "group": "Frontend",
-            "pages": [
-              "frontend/overview",
-              "frontend/full-suite",
-              "frontend/a11y",
-              "frontend/packages",
-              "frontend/patterns"
-            ]
-          },
-          {
-            "group": "Backend",
-            "pages": [
-              "backend/overview",
-              "backend/api-routes",
-              "backend/models",
-              "backend/auth",
-              "backend/integrations"
-            ]
-          }
+        "group": "Getting Started",
+        "pages": [
+          "index",
+          "architecture"
+        ]
+      },
+      {
+        "group": "Onboarding",
+        "pages": [
+          "onboarding/introduction",
+          "onboarding/dev-setup"
+        ]
+      },
+      {
+        "group": "Frontend",
+        "pages": [
+          "frontend/overview",
+          "frontend/full-suite",
+          "frontend/a11y",
+          "frontend/packages",
+          "frontend/patterns"
+        ]
+      },
+      {
+        "group": "Backend",
+        "pages": [
+          "backend/overview",
+          "backend/api-routes",
+          "backend/models",
+          "backend/auth",
+          "backend/integrations"
         ]
       }
     ]
