@@ -4,8 +4,8 @@
   "name": "Webyes Auditor — Developer Docs",
   "colors": {
     "primary": "#0B66E4",
-    "light": "#22c55e",
-    "dark": "#14532d"
+    "light": "#0B66E4",
+    "dark": "#0B66E4"
   },
   "favicon": "/favicon.svg",
   "navigation": {
