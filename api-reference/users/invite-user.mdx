@@ -3,6 +3,11 @@ title: "Invite User"
 openapi: "POST /api/user/invite-user/"
 description: "Invite a user to join the organisation by email."
 ---
+**`POST`**
+```
+/api/user/invite-user/
+```
+
 
 Sends an invitation email to the specified address, granting them a role within the caller's organisation. Requires the `settings:team:add` permission.
 

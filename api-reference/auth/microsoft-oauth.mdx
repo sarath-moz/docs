@@ -3,6 +3,11 @@ title: "Microsoft OAuth"
 openapi: "GET /api/auth/microsoft-auth"
 description: "Initiate a Microsoft Azure AD OAuth 2.0 login flow."
 ---
+**`GET`**
+```
+/api/auth/microsoft-auth
+```
+
 
 Redirects the browser to Microsoft's login page. After the user authenticates, the server issues a local JWT and redirects to the frontend.
 

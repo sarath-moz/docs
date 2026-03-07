@@ -3,6 +3,11 @@ title: "Scan Status"
 openapi: "GET /api/website-audit/latest-audit-status/"
 description: "Poll the current status of the most recent or a specific scan."
 ---
+**`GET`**
+```
+/api/website-audit/latest-audit-status/
+```
+
 
 Returns the live status of a scan. Poll this endpoint to track scan progress until `status` changes to `completed` or `failed`.
 

@@ -3,6 +3,11 @@ title: "Cancel Subscription"
 openapi: "POST /api/stripe/cancel-subscription/"
 description: "Schedule the subscription to cancel at the end of the billing period."
 ---
+**`POST`**
+```
+/api/stripe/cancel-subscription/
+```
+
 
 Sets the subscription to cancel at the end of the current billing period. The organisation retains full access until the period ends. This action **does not** immediately terminate the subscription.
 

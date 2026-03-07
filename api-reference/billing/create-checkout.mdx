@@ -3,6 +3,11 @@ title: "Create Checkout Session"
 openapi: "POST /api/stripe/create-checkout-session/"
 description: "Create a Stripe hosted checkout session to subscribe to a plan."
 ---
+**`POST`**
+```
+/api/stripe/create-checkout-session/
+```
+
 
 Creates a Stripe Checkout session for a subscription plan and returns the redirect URL. The user should be forwarded to `checkout_url` to complete payment on Stripe's hosted page.
 

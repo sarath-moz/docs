@@ -3,6 +3,11 @@ title: "Start Scan"
 openapi: "POST /api/website-audit/"
 description: "Trigger a new accessibility and performance audit for a website."
 ---
+**`POST`**
+```
+/api/website-audit/
+```
+
 
 Starts a new audit scan for the specified website. The scan runs asynchronously — poll [Scan Status](/api-reference/scans/scan-status) to track progress. Requires the `scan:full_scan:add` permission.
 

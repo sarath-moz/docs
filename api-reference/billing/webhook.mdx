@@ -3,6 +3,11 @@ title: "Stripe Webhook"
 openapi: "POST /api/stripe/webhook"
 description: "Receive and process Stripe subscription lifecycle events."
 ---
+**`POST`**
+```
+/api/stripe/webhook
+```
+
 
 Receives webhook events from Stripe and updates subscription/billing state in the database. Authenticated using the **Stripe-Signature header**, not a JWT bearer token.
 

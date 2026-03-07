@@ -3,6 +3,11 @@ title: "Cancel Scan"
 openapi: "POST /api/website-audit/cancel-scan/"
 description: "Cancel an in-progress or scheduled scan."
 ---
+**`POST`**
+```
+/api/website-audit/cancel-scan/
+```
+
 
 Stops a running or queued scan and marks it as `canceled`. Any pages already scanned will be discarded — partial results are not saved.
 

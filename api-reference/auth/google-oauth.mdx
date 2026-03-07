@@ -3,6 +3,11 @@ title: "Google OAuth"
 openapi: "GET /api/auth/google-auth"
 description: "Initiate a Google OAuth 2.0 login flow."
 ---
+**`GET`**
+```
+/api/auth/google-auth
+```
+
 
 Redirects the browser to Google's OAuth consent screen. After the user grants consent, Google redirects back to the `/api/auth/google-auth/callback` endpoint, which issues a local JWT and redirects to the frontend.
 

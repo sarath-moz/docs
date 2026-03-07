@@ -3,6 +3,11 @@ title: "Logout"
 openapi: "POST /api/auth/logout"
 description: "Invalidate the current access token and end the user's session."
 ---
+**`POST`**
+```
+/api/auth/logout
+```
+
 
 Invalidates the caller's JWT by removing it from the Redis token store. The token becomes **immediately unusable** even before its natural expiry. No request body is required — the token is read from the `Authorization` header.
 
