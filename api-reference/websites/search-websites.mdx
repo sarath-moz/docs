@@ -1,0 +1,50 @@
+---
+title: "Search Websites"
+openapi: "GET /api/website/search/"
+description: "Search for websites by name or URL within an organisation."
+---
+
+Performs a case-insensitive substring search across website names and URLs within the specified organisation.
+
+## Query Parameters
+
+<ParamField query="search_string" type="string" required>
+  The search term to match against website names and URLs.
+</ParamField>
+
+<ParamField query="organisation_id" type="string">
+  Restrict search to a specific organisation UUID. Defaults to the authenticated user's organisation.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Matching website objects.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/website/search/?search_string=example" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "website-uuid-1",
+      "website_url": "https://example.com",
+      "website_name": "Example Site",
+      "status": "active"
+    }
+  ]
+}
+```
+</ResponseExample>

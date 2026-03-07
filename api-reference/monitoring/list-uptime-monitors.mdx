@@ -1,0 +1,49 @@
+---
+title: "List Uptime Monitors"
+openapi: "GET /api/uptime-monitor/"
+description: "Get all uptime monitors for a website, including current status."
+---
+
+Returns all uptime monitors configured for the specified website, along with their current up/down status and recent incident history.
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website to list monitors for.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of monitor objects, each containing `id`, `status` (`up`/`down`), `check_interval`, `last_checked_at`, `uptime_percentage`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/uptime-monitor/?website_id=website-uuid" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "monitor-uuid-1",
+      "website_id": "website-uuid",
+      "status": "up",
+      "check_interval": 5,
+      "last_checked_at": "2025-03-06T10:55:00Z",
+      "uptime_percentage": 99.98,
+      "response_time_ms": 312
+    }
+  ]
+}
+```
+</ResponseExample>

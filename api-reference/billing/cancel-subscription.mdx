@@ -1,0 +1,40 @@
+---
+title: "Cancel Subscription"
+openapi: "POST /api/stripe/cancel-subscription/"
+description: "Schedule the subscription to cancel at the end of the billing period."
+---
+
+Sets the subscription to cancel at the end of the current billing period. The organisation retains full access until the period ends. This action **does not** immediately terminate the subscription.
+
+<Note>
+  After cancellation is scheduled, `status` in subscription details will show `cancel_at_period_end: true`. Users can re-subscribe before the period ends to reverse the cancellation.
+</Note>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the cancellation has been scheduled.
+</ResponseField>
+
+<ResponseField name="data.cancel_at" type="string">
+  ISO 8601 timestamp of when the subscription will be canceled.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X POST https://api.webyes.com/api/stripe/cancel-subscription/ \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Subscription will be canceled at the end of the billing period.",
+  "data": {
+    "cancel_at": "2025-04-01T00:00:00Z"
+  }
+}
+```
+</ResponseExample>

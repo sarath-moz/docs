@@ -1,0 +1,82 @@
+---
+title: "Get RUM Metrics"
+openapi: "GET /api/rum/"
+description: "Retrieve Real User Monitoring (RUM) metrics — Core Web Vitals and session data."
+---
+
+Returns aggregated Real User Monitoring data collected from live visitors via the injected RUM script. Includes Core Web Vitals (LCP, FID, CLS, INP), session counts, and page-level performance breakdown.
+
+<Note>
+  RUM data is only available after the tracking snippet has been installed on the website and traffic has been recorded.
+</Note>
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website to retrieve RUM data for.
+</ParamField>
+
+<ParamField query="from_date" type="string">
+  Start of the date range in `YYYY-MM-DD` format. Defaults to 30 days ago.
+</ParamField>
+
+<ParamField query="to_date" type="string">
+  End of the date range in `YYYY-MM-DD` format. Defaults to today.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.sessions" type="integer">
+  Total number of user sessions recorded in the date range.
+</ResponseField>
+
+<ResponseField name="data.lcp_p75" type="number">
+  75th percentile Largest Contentful Paint in milliseconds.
+</ResponseField>
+
+<ResponseField name="data.fid_p75" type="number">
+  75th percentile First Input Delay in milliseconds.
+</ResponseField>
+
+<ResponseField name="data.cls_p75" type="number">
+  75th percentile Cumulative Layout Shift score.
+</ResponseField>
+
+<ResponseField name="data.inp_p75" type="number">
+  75th percentile Interaction to Next Paint in milliseconds.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/rum/?website_id=website-uuid&from_date=2025-02-01&to_date=2025-03-01" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "sessions": 12480,
+    "pageviews": 38200,
+    "lcp_p75": 2100,
+    "fid_p75": 45,
+    "cls_p75": 0.08,
+    "inp_p75": 180,
+    "bounce_rate": 0.42,
+    "pages": [
+      {
+        "url": "https://example.com/",
+        "sessions": 5200,
+        "lcp_p75": 1800
+      }
+    ]
+  }
+}
+```
+</ResponseExample>

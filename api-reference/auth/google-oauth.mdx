@@ -1,0 +1,39 @@
+---
+title: "Google OAuth"
+openapi: "GET /api/auth/google-auth"
+description: "Initiate a Google OAuth 2.0 login flow."
+---
+
+Redirects the browser to Google's OAuth consent screen. After the user grants consent, Google redirects back to the `/api/auth/google-auth/callback` endpoint, which issues a local JWT and redirects to the frontend.
+
+**Scopes requested:** `openid`, `profile`, `email`
+
+<Tip>
+  This is a browser-redirect flow. Call this URL directly from the frontend `<a>` tag or `window.location` — do **not** use it as a JSON API call.
+</Tip>
+
+## Flow
+
+1. Browser navigates to `GET /api/auth/google-auth`
+2. Server redirects → Google's consent screen
+3. User approves → Google redirects to `GET /api/auth/google-auth/callback?code=...`
+4. Server exchanges code for profile, creates/finds user, issues JWT
+5. Server redirects to frontend: `https://app.webyes.com/auth/callback?token=<jwt>`
+
+## Callback Parameters
+
+<ParamField query="code" type="string" required>
+  OAuth authorization code from Google. Handled server-side automatically.
+</ParamField>
+
+<ParamField query="state" type="string">
+  CSRF state value. Handled server-side automatically.
+</ParamField>
+
+## Response
+
+`302 Redirect` to the frontend app with the JWT token as a query parameter.
+
+```
+Location: https://app.webyes.com/auth/callback?token=eyJhbGci...
+```

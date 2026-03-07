@@ -1,0 +1,31 @@
+---
+title: "Microsoft OAuth"
+openapi: "GET /api/auth/microsoft-auth"
+description: "Initiate a Microsoft Azure AD OAuth 2.0 login flow."
+---
+
+Redirects the browser to Microsoft's login page. After the user authenticates, the server issues a local JWT and redirects to the frontend.
+
+**Scopes requested:** `openid`, `profile`, `email`, `User.Read`
+
+<Tip>
+  This is a browser-redirect flow. Navigate the user to this URL directly — do **not** call it as a JSON API.
+</Tip>
+
+## Flow
+
+1. Browser navigates to `GET /api/auth/microsoft-auth`
+2. Server redirects to Microsoft login / consent screen
+3. User authenticates and Microsoft redirects to `/api/auth/microsoft-auth/callback?code=...`
+4. Server exchanges the code for profile, creates/finds the user, issues a local JWT
+5. Server redirects to: `https://app.webyes.com/auth/callback?token=<jwt>`
+
+## Callback Parameters
+
+<ParamField query="code" type="string" required>
+  Authorization code from Microsoft. Handled server-side automatically.
+</ParamField>
+
+## Response
+
+`302 Redirect` to the frontend with the JWT as a query parameter.

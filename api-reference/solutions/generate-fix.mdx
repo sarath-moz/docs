@@ -1,0 +1,76 @@
+---
+title: "Generate Accessibility Fix"
+openapi: "POST /api/solutions/"
+description: "Use AI (Gemini 2.0 Flash) to generate a code fix for an accessibility issue."
+---
+
+Sends an accessibility issue and the offending HTML snippet to **Google Gemini 2.0 Flash**, which returns a corrected code snippet with an explanation. Results are cached in S3 for **180 days** to avoid redundant AI calls.
+
+<Note>
+  The `issue_id` maps to an Axe rule ID (e.g. `image-alt`, `color-contrast`). Get these from [Get Accessibility Data](/api-reference/results/get-accessibility-data).
+</Note>
+
+## Request Body
+
+<ParamField body="issue_id" type="string" required>
+  Axe rule ID of the accessibility issue (e.g. `image-alt`, `button-name`).
+</ParamField>
+
+<ParamField body="html_snippet" type="string" required>
+  The HTML element(s) that contain the accessibility violation.
+</ParamField>
+
+<ParamField body="issue_description" type="string">
+  Additional context about the issue to improve the fix quality.
+</ParamField>
+
+<ParamField body="page_url" type="string">
+  URL of the page where the issue was found (used for context).
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when a fix was generated successfully.
+</ResponseField>
+
+<ResponseField name="data.current_code" type="string">
+  The original HTML snippet with the violation.
+</ResponseField>
+
+<ResponseField name="data.correct_code" type="string">
+  The AI-corrected HTML snippet.
+</ResponseField>
+
+<ResponseField name="data.explanation" type="string">
+  Plain-language explanation of what was fixed and why.
+</ResponseField>
+
+<ResponseField name="data.solution_url" type="string">
+  Presigned S3 URL linking to the cached solution (valid 180 days).
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "issue_id": "image-alt",
+  "html_snippet": "<img src='/team-photo.jpg'>",
+  "issue_description": "Image missing alt text on team page",
+  "page_url": "https://example.com/team"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "current_code": "<img src='/team-photo.jpg'>",
+    "correct_code": "<img src='/team-photo.jpg' alt='Our team at the 2025 company retreat'>",
+    "explanation": "Added a descriptive alt attribute to the image. Screen readers will now announce the image content to users who cannot see it, satisfying WCAG 1.1.1 (Non-text Content).",
+    "solution_url": "https://webyes-solutions.s3.amazonaws.com/solutions/cache-key.json?X-Amz-Signature=..."
+  }
+}
+```
+</ResponseExample>

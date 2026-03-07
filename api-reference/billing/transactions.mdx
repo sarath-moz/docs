@@ -1,0 +1,43 @@
+---
+title: "Transaction History"
+openapi: "GET /api/stripe/transactions/"
+description: "Get paginated list of invoices and payment history."
+---
+
+Returns a paginated list of all Stripe invoices and payment records for the organisation.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of transaction objects, each containing `id`, `amount`, `currency`, `status` (`paid`/`open`/`void`), `invoice_url`, and `created_at`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl https://api.webyes.com/api/stripe/transactions/ \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "in_1ABC123...",
+      "amount": 9900,
+      "currency": "usd",
+      "status": "paid",
+      "description": "Pro Plan - March 2025",
+      "invoice_url": "https://invoice.stripe.com/i/...",
+      "created_at": "2025-03-01T00:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>

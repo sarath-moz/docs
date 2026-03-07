@@ -1,0 +1,46 @@
+---
+title: "Re-run Scan"
+openapi: "POST /api/website-audit/rescan/"
+description: "Trigger a new scan using the same configuration as a previous audit."
+---
+
+Re-runs an existing audit with identical settings — same `scan_type`, `audit_device`, page limits, and custom audit list. Useful for tracking changes over time without re-entering configuration.
+
+## Request Body
+
+<ParamField body="audit_id" type="string" required>
+  UUID of the original scan to repeat.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the rescan has been queued.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The new scan object — includes `id` (new audit_id) and `status: "scheduled"`.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "audit_id": "original-audit-uuid-here"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "new-audit-uuid-here",
+    "website_id": "website-uuid",
+    "status": "scheduled",
+    "scan_type": "full",
+    "audit_start_time": "2025-03-06T11:00:00Z"
+  }
+}
+```
+</ResponseExample>

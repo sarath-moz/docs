@@ -1,0 +1,55 @@
+---
+title: "Update Website"
+openapi: "PATCH /api/website/"
+description: "Update configuration for an existing website."
+---
+
+Updates one or more settings on a registered website. Only the provided fields are updated.
+
+## Request Body
+
+<ParamField body="website_id" type="string" required>
+  UUID of the website to update.
+</ParamField>
+
+<ParamField body="website_name" type="string">
+  New display name for the website.
+</ParamField>
+
+<ParamField body="region_id" type="string">
+  New scan server region UUID.
+</ParamField>
+
+<ParamField body="enable_aaa" type="boolean">
+  Whether to enable WCAG 2.x AAA level checks during scans.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the website has been updated.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "website_id": "website-uuid-here",
+  "website_name": "Updated Site Name",
+  "enable_aaa": true
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "website-uuid-here",
+    "website_name": "Updated Site Name",
+    "enable_aaa": true,
+    "status": "active"
+  }
+}
+```
+</ResponseExample>

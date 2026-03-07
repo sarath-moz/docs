@@ -1,0 +1,58 @@
+---
+title: "Update Profile"
+openapi: "PATCH /api/user/"
+description: "Update the authenticated user's profile information."
+---
+
+Updates the currently authenticated user's profile. Only the fields provided will be updated — all others remain unchanged.
+
+## Request Body
+
+<ParamField body="first_name" type="string">
+  Updated first name.
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  Updated last name.
+</ParamField>
+
+<ParamField body="phone_number" type="string">
+  Updated phone number in international format (e.g. `+1-555-0100`).
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the profile has been updated.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated user profile object.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Developer",
+  "phone_number": "+1-555-0199"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "email": "dev@webyes.com",
+    "first_name": "Jane",
+    "last_name": "Developer",
+    "phone_number": "+1-555-0199",
+    "email_verified": true,
+    "user_status": "active"
+  }
+}
+```
+</ResponseExample>

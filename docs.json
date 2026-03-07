@@ -8,40 +8,153 @@
     "dark": "#0B66E4"
   },
   "favicon": "/favicon.svg",
+  "openapi": "api-reference/openapi.json",
   "navigation": {
-    "groups": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "architecture"
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["index", "architecture"]
+          },
+          {
+            "group": "Onboarding",
+            "pages": ["onboarding/introduction", "onboarding/dev-setup"]
+          }
         ]
       },
       {
-        "group": "Onboarding",
-        "pages": [
-          "onboarding/introduction",
-          "onboarding/dev-setup"
+        "tab": "Frontend",
+        "groups": [
+          {
+            "group": "Monorepo",
+            "pages": [
+              "frontend/overview",
+              "frontend/full-suite",
+              "frontend/a11y",
+              "frontend/packages"
+            ]
+          },
+          {
+            "group": "Patterns",
+            "pages": ["frontend/patterns"]
+          }
         ]
       },
       {
-        "group": "Frontend",
-        "pages": [
-          "frontend/overview",
-          "frontend/full-suite",
-          "frontend/a11y",
-          "frontend/packages",
-          "frontend/patterns"
+        "tab": "Backend",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "backend/overview",
+              "backend/auth",
+              "backend/integrations"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "backend/models",
+              "backend/api-routes"
+            ]
+          }
         ]
       },
       {
-        "group": "Backend",
-        "pages": [
-          "backend/overview",
-          "backend/api-routes",
-          "backend/models",
-          "backend/auth",
-          "backend/integrations"
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api-reference/introduction"]
+          },
+          {
+            "group": "Auth",
+            "pages": [
+              "api-reference/auth/login",
+              "api-reference/auth/logout",
+              "api-reference/auth/forgot-password",
+              "api-reference/auth/reset-password",
+              "api-reference/auth/refresh-token",
+              "api-reference/auth/google-oauth",
+              "api-reference/auth/microsoft-oauth"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api-reference/users/create-user",
+              "api-reference/users/get-me",
+              "api-reference/users/update-user",
+              "api-reference/users/send-otp",
+              "api-reference/users/verify-otp",
+              "api-reference/users/invite-user"
+            ]
+          },
+          {
+            "group": "Websites",
+            "pages": [
+              "api-reference/websites/add-website",
+              "api-reference/websites/list-websites",
+              "api-reference/websites/update-website",
+              "api-reference/websites/delete-website",
+              "api-reference/websites/search-websites"
+            ]
+          },
+          {
+            "group": "Scans",
+            "pages": [
+              "api-reference/scans/start-scan",
+              "api-reference/scans/scan-history",
+              "api-reference/scans/scan-status",
+              "api-reference/scans/rescan",
+              "api-reference/scans/cancel-scan"
+            ]
+          },
+          {
+            "group": "Results",
+            "pages": [
+              "api-reference/results/get-audit-results",
+              "api-reference/results/get-accessibility-data"
+            ]
+          },
+          {
+            "group": "Reports",
+            "pages": ["api-reference/reports/get-report"]
+          },
+          {
+            "group": "AI Solutions",
+            "pages": ["api-reference/solutions/generate-fix"]
+          },
+          {
+            "group": "Billing",
+            "pages": [
+              "api-reference/billing/create-checkout",
+              "api-reference/billing/subscription-details",
+              "api-reference/billing/cancel-subscription",
+              "api-reference/billing/transactions",
+              "api-reference/billing/webhook"
+            ]
+          },
+          {
+            "group": "Organisations",
+            "pages": [
+              "api-reference/organisations/create-organisation",
+              "api-reference/organisations/list-organisations",
+              "api-reference/organisations/list-members",
+              "api-reference/organisations/remove-member"
+            ]
+          },
+          {
+            "group": "Monitoring",
+            "pages": [
+              "api-reference/monitoring/create-uptime-monitor",
+              "api-reference/monitoring/list-uptime-monitors",
+              "api-reference/monitoring/get-rum",
+              "api-reference/monitoring/list-regions"
+            ]
+          }
         ]
       }
     ]

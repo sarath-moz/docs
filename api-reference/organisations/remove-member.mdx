@@ -1,0 +1,39 @@
+---
+title: "Remove Member"
+openapi: "DELETE /api/organisation/{user_id}"
+description: "Remove a user from the organisation."
+---
+
+Removes the specified user from the caller's organisation, revoking all their access. Requires the `settings:team:delete` permission.
+
+<Warning>
+  This action is immediate. The removed user will lose all access to the organisation's websites, scans, and reports.
+</Warning>
+
+## Path Parameters
+
+<ParamField path="user_id" type="string" required>
+  UUID of the user to remove from the organisation.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the user has been removed.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X DELETE https://api.webyes.com/api/organisation/user-uuid-here \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Member removed from organisation"
+}
+```
+</ResponseExample>

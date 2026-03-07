@@ -1,0 +1,40 @@
+---
+title: "Cancel Scan"
+openapi: "POST /api/website-audit/cancel-scan/"
+description: "Cancel an in-progress or scheduled scan."
+---
+
+Stops a running or queued scan and marks it as `canceled`. Any pages already scanned will be discarded — partial results are not saved.
+
+<Warning>
+  Canceling a scan **does not refund** the credits already consumed by pages scanned before cancellation.
+</Warning>
+
+## Request Body
+
+<ParamField body="audit_id" type="string" required>
+  UUID of the scan to cancel.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the scan has been canceled.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "audit_id": "audit-uuid-to-cancel"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Scan canceled successfully"
+}
+```
+</ResponseExample>

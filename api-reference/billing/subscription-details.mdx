@@ -1,0 +1,62 @@
+---
+title: "Get Subscription"
+openapi: "GET /api/stripe/subscription-details/"
+description: "Get the current subscription status, plan, and credit usage."
+---
+
+Returns the organisation's active subscription details, including plan name, billing period, renewal date, and current scan credit usage.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.plan" type="object">
+  The active plan — `name`, `slug`, `price`, `currency`, `recurrance` (`monthly`/`yearly`).
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Stripe subscription status: `active`, `trialing`, `past_due`, `canceled`, `incomplete`.
+</ResponseField>
+
+<ResponseField name="data.current_period_end" type="string">
+  ISO 8601 date when the current billing period ends.
+</ResponseField>
+
+<ResponseField name="data.credits_used" type="integer">
+  Number of scan credits consumed in the current billing period.
+</ResponseField>
+
+<ResponseField name="data.credits_limit" type="integer">
+  Total scan credits available in the current billing period.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl https://api.webyes.com/api/stripe/subscription-details/ \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "plan": {
+      "name": "Pro",
+      "slug": "pro-monthly",
+      "price": 99.00,
+      "currency": "USD",
+      "recurrance": "monthly"
+    },
+    "status": "active",
+    "current_period_start": "2025-03-01T00:00:00Z",
+    "current_period_end": "2025-04-01T00:00:00Z",
+    "credits_used": 150,
+    "credits_limit": 1000
+  }
+}
+```
+</ResponseExample>

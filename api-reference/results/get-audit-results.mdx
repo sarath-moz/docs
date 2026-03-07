@@ -1,0 +1,76 @@
+---
+title: "Get Audit Results"
+openapi: "GET /api/results/"
+description: "Retrieve aggregated scores and findings for a completed scan."
+---
+
+Returns aggregated audit results for a completed scan — accessibility, performance, SEO, and quality scores along with issue counts grouped by severity.
+
+<Note>
+  Only available for scans with `status: "completed"`. Check scan status via [Scan Status](/api-reference/scans/scan-status) first.
+</Note>
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website.
+</ParamField>
+
+<ParamField query="audit_id" type="string">
+  UUID of the specific scan. If omitted, returns results for the latest completed scan.
+</ParamField>
+
+<ParamField query="device" type="string">
+  Filter by device: `mobile` or `desktop`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.accessibility_score" type="number">
+  Overall accessibility score (0–100).
+</ResponseField>
+
+<ResponseField name="data.performance_score" type="number">
+  Overall performance score (0–100).
+</ResponseField>
+
+<ResponseField name="data.seo_score" type="number">
+  SEO score (0–100).
+</ResponseField>
+
+<ResponseField name="data.issues_by_severity" type="object">
+  Issue counts grouped by severity: `critical`, `serious`, `moderate`, `minor`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/results/?website_id=website-uuid&audit_id=audit-uuid&device=desktop" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "audit_id": "audit-uuid",
+    "accessibility_score": 82,
+    "performance_score": 74,
+    "seo_score": 91,
+    "quality_score": 88,
+    "total_pages_scanned": 45,
+    "issues_by_severity": {
+      "critical": 3,
+      "serious": 12,
+      "moderate": 28,
+      "minor": 41
+    }
+  }
+}
+```
+</ResponseExample>

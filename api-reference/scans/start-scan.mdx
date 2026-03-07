@@ -1,0 +1,85 @@
+---
+title: "Start Scan"
+openapi: "POST /api/website-audit/"
+description: "Trigger a new accessibility and performance audit for a website."
+---
+
+Starts a new audit scan for the specified website. The scan runs asynchronously — poll [Scan Status](/api-reference/scans/scan-status) to track progress. Requires the `scan:full_scan:add` permission.
+
+<Note>
+  Each scan consumes credits from the organisation's plan quota. Check the subscription before starting large scans.
+</Note>
+
+## Request Body
+
+<ParamField body="website_id" type="string" required>
+  UUID of the website to scan.
+</ParamField>
+
+<ParamField body="scan_type" type="string" default="full">
+  Scan depth: `quick`, `full`, or `custom`.
+</ParamField>
+
+<ParamField body="audit_device" type="string" default="desktop">
+  Device type to emulate: `mobile` or `desktop`.
+</ParamField>
+
+<ParamField body="max_number_of_pages" type="integer" default="0">
+  Maximum pages to crawl. `0` means unlimited (up to the plan limit).
+</ParamField>
+
+<ParamField body="json_audit_list" type="object">
+  Custom audit configuration.
+  - `audit_types`: array of `"accessibility"`, `"performance"`, `"seo"`, `"quality"`
+  - `standards`: array of `"wcag2.1aa"`, `"wcag2.2aa"`, `"ADA"`, `"EN301549"`
+</ParamField>
+
+<ParamField body="json_include_links" type="array">
+  URL patterns (substrings) to **include** in the crawl.
+</ParamField>
+
+<ParamField body="json_exclude_links" type="array">
+  URL patterns (substrings) to **exclude** from the crawl.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the scan has been queued.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The created scan object — includes `id` (audit_id), `status`, `scan_type`, `audit_start_time`.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "website_id": "website-uuid-here",
+  "scan_type": "full",
+  "audit_device": "desktop",
+  "max_number_of_pages": 100,
+  "json_audit_list": {
+    "audit_types": ["accessibility", "performance"],
+    "standards": ["wcag2.2aa", "ADA"]
+  }
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "audit-uuid-here",
+    "website_id": "website-uuid-here",
+    "status": "scheduled",
+    "scan_type": "full",
+    "audit_device": "desktop",
+    "audit_start_time": "2025-03-06T10:00:00Z",
+    "is_scheduled_scan": false
+  }
+}
+```
+</ResponseExample>

@@ -1,33 +1,102 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API Reference"
+description: "Webyes Auditor REST API — base URLs, authentication, and response conventions."
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URLs
 
-## Welcome
+| Environment | URL |
+|-------------|-----|
+| Local dev | `http://localhost:8000` |
+| Staging | `https://api.staging.webyes.com` |
+| Production | `https://api.webyes.com` |
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+Interactive docs (Swagger UI) are available at `/api/openapi.json` on any running instance.
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+---
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All protected endpoints require a **JWT bearer token** obtained from `POST /api/auth/login`.
+
+```http
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...
+```
+
+Tokens are RS256-signed JWTs stored in Redis. They expire after **7 days**. Logging out immediately invalidates the token in Redis regardless of the expiry time.
+
+<Note>
+  The Stripe webhook endpoint (`POST /api/stripe/webhook`) is the only endpoint that uses **Stripe signature verification** instead of JWT. Do not send a bearer token to that endpoint.
+</Note>
+
+---
+
+## Response Format
+
+Every endpoint returns the same JSON envelope:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{ "success": true,  "data": { ... } }
 ```
+
+```json
+{ "success": false, "message": "Error description" }
+```
+
+| Status Code | Meaning |
+|-------------|---------|
+| `200` | OK |
+| `201` | Created |
+| `400` | Bad request / validation error |
+| `401` | Missing or invalid token |
+| `403` | Valid token but insufficient permission |
+| `404` | Resource not found |
+| `422` | Unprocessable entity (Pydantic validation) |
+| `429` | Rate limit exceeded |
+
+---
+
+## Rate Limiting
+
+Sensitive endpoints are rate-limited to **10 requests per minute per IP** via SlowAPI:
+
+- `POST /api/auth/login`
+- `POST /api/user/` (registration)
+- `POST /api/user/verify-email/`
+- `POST /api/user/verify-email-otp/`
+- `POST /api/user/verify-email-link/`
+- `POST /api/user/invite-user/`
+
+---
+
+## Permissions
+
+Some endpoints require specific **permission slugs** on the authenticated user's role in addition to a valid JWT.
+
+| Slug | Required for |
+|------|-------------|
+| `settings:website:add` | Add a website |
+| `settings:website:delete` | Delete a website |
+| `settings:website:transfer` | Transfer a website |
+| `settings:team:add` | Invite team members |
+| `scan:full_scan:add` | Start an audit scan |
+| `settings:organisation:edit` | Edit organisation details |
+
+If the permission is missing the endpoint returns `HTTP 403`.
+
+---
+
+## API Groups
+
+<Columns cols={2}>
+  <Card title="Auth" icon="lock" href="/api-reference/auth/login">Login, logout, OAuth (Google, Microsoft, Cognito)</Card>
+  <Card title="Users" icon="user" href="/api-reference/users/create-user">Registration, profile, email verification, invites</Card>
+  <Card title="Websites" icon="globe" href="/api-reference/websites/add-website">Add, list, update, and delete websites</Card>
+  <Card title="Scans" icon="magnifying-glass" href="/api-reference/scans/start-scan">Trigger, cancel, and track audit scans</Card>
+  <Card title="Results" icon="chart-bar" href="/api-reference/results/get-audit-results">Audit results and accessibility data</Card>
+  <Card title="Reports" icon="file-pdf" href="/api-reference/reports/get-report">Generate and download audit reports</Card>
+  <Card title="AI Solutions" icon="sparkles" href="/api-reference/solutions/generate-fix">Gemini-powered accessibility fix suggestions</Card>
+  <Card title="Billing" icon="credit-card" href="/api-reference/billing/create-checkout">Stripe subscriptions, checkout, transactions</Card>
+  <Card title="Organisations" icon="building" href="/api-reference/organisations/create-organisation">Organisation CRUD and member management</Card>
+  <Card title="Monitoring" icon="signal" href="/api-reference/monitoring/list-uptime-monitors">Uptime monitors, RUM, scan schedules</Card>
+</Columns>

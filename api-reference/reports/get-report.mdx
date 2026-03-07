@@ -1,0 +1,49 @@
+---
+title: "Get Report"
+openapi: "GET /api/report/"
+description: "Get a presigned URL to download the audit report PDF."
+---
+
+Returns a presigned S3 URL to download the full audit report PDF. The URL is valid for **120 seconds** — download the file promptly after receiving the URL.
+
+<Tip>
+  Open the `report_url` directly in a browser `<a>` tag or fetch it with your HTTP client to download the PDF.
+</Tip>
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website.
+</ParamField>
+
+<ParamField query="audit_id" type="string" required>
+  UUID of the completed scan to generate the report for.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.report_url" type="string">
+  Presigned S3 URL for the PDF report. Valid for **120 seconds**.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/report/?website_id=website-uuid&audit_id=audit-uuid" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "report_url": "https://webyes-reports.s3.amazonaws.com/reports/audit-uuid/report.pdf?X-Amz-Signature=..."
+  }
+}
+```
+</ResponseExample>

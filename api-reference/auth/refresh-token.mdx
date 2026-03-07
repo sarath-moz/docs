@@ -1,0 +1,45 @@
+---
+title: "Refresh Token"
+openapi: "POST /api/auth/refresh-token"
+description: "Exchange a current token for a new short-lived JWT access token."
+---
+
+Issues a new access token, allowing clients to stay authenticated without prompting the user to log in again.
+
+<Tip>
+  Implement silent refresh by calling this endpoint ~60 seconds before the access token's `exp` claim.
+</Tip>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer <access_token>` — the current (not yet expired) JWT.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when a new token has been issued.
+</ResponseField>
+
+<ResponseField name="data.access_token" type="string">
+  A new signed JWT (RS256). Replace the previous token in your client store.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl -X POST https://api.webyes.com/api/auth/refresh-token \
+  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.new_payload..."
+  }
+}
+```
+</ResponseExample>

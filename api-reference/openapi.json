@@ -1,216 +1,975 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "Webyes Auditor API",
+    "version": "1.0.0",
+    "description": "REST API for the Webyes Auditor platform. Handles authentication, website management, accessibility/performance scans, billing, RUM, and reports.\n\n## Authentication\n\nAll protected endpoints require a JWT bearer token obtained from `/api/auth/login`.\n\n```\nAuthorization: Bearer <access_token>\n```\n\n## Response Format\n\nAll endpoints return a consistent JSON envelope:\n\n```json\n{ \"success\": true, \"data\": { ... } }\n{ \"success\": false, \"message\": \"Error description\" }\n```"
   },
   "servers": [
-    {
-      "url": "http://sandbox.mintlify.com"
-    }
+    { "url": "http://localhost:8000", "description": "Local development" },
+    { "url": "https://api.staging.webyes.com", "description": "Staging" },
+    { "url": "https://api.webyes.com", "description": "Production" }
   ],
-  "security": [
-    {
-      "bearerAuth": []
+  "security": [{ "bearerAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT (RS256)"
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "type": "object" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string", "example": "Invalid credentials" }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email_verified": { "type": "boolean" },
+          "user_status": { "type": "string", "enum": ["active", "inactive", "marked_for_delete", "archived", "expired", "canceled"] },
+          "is_from_suit": { "type": "boolean", "description": "true = full-suite user, false = a11y user" },
+          "created_time": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Website": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "website_url": { "type": "string", "format": "uri" },
+          "website_name": { "type": "string" },
+          "organisation_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["active", "inactive"] },
+          "region_id": { "type": "string", "format": "uuid", "nullable": true },
+          "rum_status": { "type": "string", "nullable": true },
+          "enable_aaa": { "type": "boolean", "nullable": true },
+          "created_time": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebsiteAudit": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "website_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["scheduled", "in_progress", "completed", "failed", "canceled"] },
+          "scan_type": { "type": "string", "enum": ["quick", "full", "custom"] },
+          "audit_start_time": { "type": "string", "format": "date-time" },
+          "audit_end_time": { "type": "string", "format": "date-time", "nullable": true },
+          "is_scheduled_scan": { "type": "boolean" },
+          "total_credits_used": { "type": "integer", "nullable": true }
+        }
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "price": { "type": "number" },
+          "currency": { "type": "string" },
+          "recurrance": { "type": "string", "enum": ["monthly", "yearly"], "nullable": true },
+          "scan_limit": { "type": "integer", "nullable": true },
+          "website_limit": { "type": "integer", "nullable": true },
+          "user_limit": { "type": "integer", "nullable": true },
+          "features": { "type": "object" },
+          "status": { "type": "string", "enum": ["active", "inactive"] }
+        }
+      },
+      "Organisation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "organisation_name": { "type": "string" },
+          "status": { "type": "string" },
+          "audit_max_number_of_pages": { "type": "integer", "nullable": true },
+          "created_time": { "type": "string", "format": "date-time" }
+        }
+      }
     }
+  },
+  "tags": [
+    { "name": "Health", "description": "Service health check" },
+    { "name": "Auth", "description": "Login, logout, password reset, and OAuth flows (Google, Microsoft, Cognito)" },
+    { "name": "Users", "description": "User registration, profile management, email verification, and team invitations" },
+    { "name": "Websites", "description": "Add, update, delete, and search websites registered for auditing" },
+    { "name": "Scans", "description": "Trigger and manage website audit scans" },
+    { "name": "Results", "description": "Retrieve audit results and accessibility data" },
+    { "name": "Reports", "description": "Generate and retrieve audit reports" },
+    { "name": "AI Solutions", "description": "Gemini AI-powered accessibility fix suggestions" },
+    { "name": "Billing", "description": "Stripe subscription management, checkout, and transaction history" },
+    { "name": "Plans", "description": "Available subscription plans" },
+    { "name": "Organisations", "description": "Organisation CRUD and member management" },
+    { "name": "Scan Schedules", "description": "Configure recurring automated scans" },
+    { "name": "Uptime Monitor", "description": "Monitor website availability" },
+    { "name": "RUM", "description": "Real User Monitoring — metrics and configuration" },
+    { "name": "Search Console", "description": "Google Search Console OAuth and data" },
+    { "name": "Regions", "description": "Available scan server regions" },
+    { "name": "Offboarding", "description": "Account deletion and cancellation" }
   ],
   "paths": {
-    "/plants": {
+    "/api/health": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
+        "tags": ["Health"],
+        "summary": "Health check",
+        "description": "Returns 200 if the service is running.",
+        "security": [],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" } } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login with email and password",
+        "description": "Authenticates a user with email and password. Returns a JWT access token. Rate limited to 10 requests/min per IP.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "dev@webyes.com" },
+                  "password": { "type": "string", "example": "securepassword123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "access_token": { "type": "string", "example": "eyJhbGciOiJSUzI1NiIs..." },
+                        "user": { "$ref": "#/components/schemas/UserProfile" }
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
+          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "429": { "description": "Rate limit exceeded" }
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout",
+        "description": "Invalidates the current JWT token in Redis. Token becomes immediately unusable.",
+        "responses": {
+          "200": { "description": "Logged out successfully" }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset",
+        "description": "Sends a password reset email to the provided address.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": { "email": { "type": "string", "format": "email" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent if account exists" }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Complete password reset",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "new_password"],
+                "properties": {
+                  "token": { "type": "string" },
+                  "new_password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "description": "Invalid or expired token" }
+        }
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh access token",
+        "description": "Exchange a refresh token for a new access token.",
+        "responses": {
+          "200": { "description": "New access token issued" }
+        }
+      }
+    },
+    "/api/auth/google-auth": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Initiate Google OAuth",
+        "description": "Redirects the user to Google's OAuth consent screen. Scopes: openid, profile, email.",
+        "security": [],
+        "responses": {
+          "302": { "description": "Redirect to Google OAuth" }
+        }
+      }
+    },
+    "/api/auth/google-auth/callback": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Google OAuth callback",
+        "description": "Handles the OAuth callback from Google. Creates or finds the user, issues a local JWT, and redirects to the frontend with `?token=<jwt>`.",
+        "security": [],
         "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "state", "in": "query", "schema": { "type": "string" } }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
+          "302": { "description": "Redirect to frontend with token" }
+        }
+      }
+    },
+    "/api/auth/microsoft-auth": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Initiate Microsoft OAuth",
+        "description": "Redirects to Microsoft login. Scopes: openid, profile, email, User.Read.",
+        "security": [],
+        "responses": {
+          "302": { "description": "Redirect to Microsoft login" }
+        }
+      }
+    },
+    "/api/auth/microsoft-auth/callback": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Microsoft OAuth callback",
+        "security": [],
+        "parameters": [
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "302": { "description": "Redirect to frontend with token" }
+        }
+      }
+    },
+    "/api/user/": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create user account",
+        "description": "Registers a new user. Rate limited to 10 requests/min per IP.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "first_name"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "first_name": { "type": "string" },
+                  "last_name": { "type": "string" },
+                  "user_type": { "type": "string", "enum": ["webowner", "agencyowner", "other"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessResponse" } } } },
+          "409": { "description": "Email already registered" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update user profile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": { "type": "string" },
+                  "last_name": { "type": "string" },
+                  "phone_number": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated" }
+        }
+      }
+    },
+    "/api/user/me/": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user",
+        "description": "Returns the authenticated user's profile, organisation, role, and permissions.",
+        "responses": {
+          "200": {
+            "description": "Current user data",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/UserProfile" },
+                        "organisation": { "$ref": "#/components/schemas/Organisation" },
+                        "permissions": { "type": "array", "items": { "type": "string" }, "example": ["settings:website:add", "scan:full_scan:add"] }
+                      }
+                    }
+                  }
                 }
               }
             }
           }
         }
       }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    },
+    "/api/user/verify-email/": {
       "post": {
-        "description": "Information about a new plant added to the store",
+        "tags": ["Users"],
+        "summary": "Send email OTP",
+        "description": "Sends a one-time password to the user's email for verification. Rate limited.",
         "requestBody": {
-          "description": "Plant added to the store",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "OTP sent" } }
+      }
+    },
+    "/api/user/verify-email-otp/": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Verify email OTP",
+        "description": "Validates the OTP code and marks the user's email as verified.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["email", "otp"], "properties": { "email": { "type": "string" }, "otp": { "type": "string", "example": "482910" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Email verified" }, "400": { "description": "Invalid or expired OTP" } }
+      }
+    },
+    "/api/user/invite-user/": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Invite user to organisation",
+        "description": "Sends an invitation email. Requires `settings:team:add` permission.",
+        "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "type": "object",
+                "required": ["email", "role_id"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "role_id": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Invitation sent" }, "403": { "description": "Missing permission" } }
+      }
+    },
+    "/api/website/": {
+      "post": {
+        "tags": ["Websites"],
+        "summary": "Add website",
+        "description": "Registers a new website to the organisation. Requires `settings:website:add` permission.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["website_url"],
+                "properties": {
+                  "website_url": { "type": "string", "format": "uri", "example": "https://example.com" },
+                  "website_name": { "type": "string", "example": "Example Site" },
+                  "region_id": { "type": "string", "format": "uuid", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Website added", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/Website" } } } } } }
+        }
+      },
+      "get": {
+        "tags": ["Websites"],
+        "summary": "List websites",
+        "description": "Returns all websites for the authenticated user's organisation.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "schema": { "type": "string", "format": "uuid" }, "description": "Filter to a specific website" }
+        ],
+        "responses": {
+          "200": { "description": "List of websites", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/Website" } } } } } } }
+        }
+      },
+      "patch": {
+        "tags": ["Websites"],
+        "summary": "Update website",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "website_id": { "type": "string", "format": "uuid" }, "website_name": { "type": "string" }, "region_id": { "type": "string", "format": "uuid" }, "enable_aaa": { "type": "boolean" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Website updated" } }
+      },
+      "delete": {
+        "tags": ["Websites"],
+        "summary": "Delete website",
+        "description": "Requires `settings:website:delete` permission.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["website_id"], "properties": { "website_id": { "type": "string", "format": "uuid" } } } } }
+        },
+        "responses": { "200": { "description": "Website deleted" }, "403": { "description": "Missing permission" } }
+      }
+    },
+    "/api/website/search/": {
+      "get": {
+        "tags": ["Websites"],
+        "summary": "Search websites",
+        "parameters": [
+          { "name": "search_string", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "organisation_id", "in": "query", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Matching websites" } }
+      }
+    },
+    "/api/website-audit/": {
+      "post": {
+        "tags": ["Scans"],
+        "summary": "Start a scan",
+        "description": "Triggers a new website audit scan. Requires `scan:full_scan:add` permission.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["website_id"],
+                "properties": {
+                  "website_id": { "type": "string", "format": "uuid" },
+                  "scan_type": { "type": "string", "enum": ["quick", "full", "custom"], "default": "full" },
+                  "audit_device": { "type": "string", "enum": ["mobile", "desktop"], "default": "desktop" },
+                  "max_number_of_pages": { "type": "integer", "default": 0, "description": "0 = unlimited" },
+                  "json_audit_list": { "type": "object", "description": "{ audit_types: [...], standards: [...] }", "example": { "audit_types": ["accessibility", "performance", "seo"], "standards": ["wcag2.2aa", "ADA"] } },
+                  "json_include_links": { "type": "array", "items": { "type": "string" }, "description": "URL patterns to include" },
+                  "json_exclude_links": { "type": "array", "items": { "type": "string" }, "description": "URL patterns to exclude" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Scan started", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/WebsiteAudit" } } } } } },
+          "403": { "description": "Missing scan permission or scan credit limit reached" }
+        }
+      }
+    },
+    "/api/website-audit/history/": {
+      "get": {
+        "tags": ["Scans"],
+        "summary": "Scan history",
+        "description": "Returns paginated scan history for a website.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "device", "in": "query", "schema": { "type": "string", "enum": ["mobile", "desktop"] } },
+          { "name": "enable_aaa", "in": "query", "schema": { "type": "boolean" } }
+        ],
+        "responses": { "200": { "description": "Paginated scan list" } }
+      }
+    },
+    "/api/website-audit/latest-audit-status/": {
+      "get": {
+        "tags": ["Scans"],
+        "summary": "Latest scan status",
+        "description": "Returns the current status of the most recent or a specific scan. Poll this endpoint to track scan progress.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "audit_id", "in": "query", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "object", "properties": { "status": { "type": "string", "enum": ["scheduled", "in_progress", "completed", "failed", "canceled"] }, "audit_id": { "type": "string", "format": "uuid" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/website-audit/rescan/": {
+      "post": {
+        "tags": ["Scans"],
+        "summary": "Re-run a scan",
+        "description": "Triggers a rescan using the same config as a previous audit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["audit_id"], "properties": { "audit_id": { "type": "string", "format": "uuid" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Rescan started" } }
+      }
+    },
+    "/api/website-audit/cancel-scan/": {
+      "post": {
+        "tags": ["Scans"],
+        "summary": "Cancel a scan",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["audit_id"], "properties": { "audit_id": { "type": "string", "format": "uuid" } } } } }
+        },
+        "responses": { "200": { "description": "Scan cancelled" } }
+      }
+    },
+    "/api/results/": {
+      "get": {
+        "tags": ["Results"],
+        "summary": "Get audit results",
+        "description": "Returns aggregated audit results (accessibility, performance, SEO, quality scores) for a completed scan.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "audit_id", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "device", "in": "query", "schema": { "type": "string", "enum": ["mobile", "desktop"] } }
+        ],
+        "responses": { "200": { "description": "Audit result data" } }
+      }
+    },
+    "/api/accessibility/": {
+      "get": {
+        "tags": ["Results"],
+        "summary": "Get accessibility data",
+        "description": "Returns detailed WCAG issue data for a scan.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "audit_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Accessibility issue list and scores" } }
+      }
+    },
+    "/api/report/": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get report",
+        "description": "Returns a presigned S3 URL to download the audit report PDF.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "audit_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Report URL", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "type": "object", "properties": { "report_url": { "type": "string", "format": "uri", "description": "Presigned S3 URL, valid for 120 seconds" } } } } } } } }
+        }
+      }
+    },
+    "/api/solutions/": {
+      "post": {
+        "tags": ["AI Solutions"],
+        "summary": "Generate accessibility fix",
+        "description": "Uses Google Gemini 2.0 Flash to generate a code fix for an accessibility issue. Result is cached in S3 for 180 days.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["issue_id", "html_snippet"],
+                "properties": {
+                  "issue_id": { "type": "string", "description": "Axe rule ID, e.g. `image-alt`" },
+                  "html_snippet": { "type": "string", "description": "The HTML element with the issue" },
+                  "issue_description": { "type": "string" },
+                  "page_url": { "type": "string", "format": "uri" }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
+            "description": "AI-generated fix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "current_code": { "type": "string", "example": "<img src='photo.jpg'>" },
+                        "correct_code": { "type": "string", "example": "<img src='photo.jpg' alt='Team photo'>" },
+                        "explanation": { "type": "string" },
+                        "solution_url": { "type": "string", "format": "uri", "description": "Presigned S3 URL to the cached solution" }
+                      }
+                    }
+                  }
+                }
               }
             }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
           }
         }
       }
     },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+    "/api/plan/": {
+      "get": {
+        "tags": ["Plans"],
+        "summary": "List plans",
+        "description": "Returns all active subscription plans.",
+        "responses": {
+          "200": { "description": "Plan list", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/Plan" } } } } } } }
+        }
+      }
+    },
+    "/api/plan/{plan_id}": {
+      "get": {
+        "tags": ["Plans"],
+        "summary": "Get plan details",
+        "parameters": [{ "name": "plan_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Plan details" } }
+      }
+    },
+    "/api/stripe/create-checkout-session/": {
+      "post": {
+        "tags": ["Billing"],
+        "summary": "Create Stripe checkout session",
+        "description": "Creates a Stripe hosted checkout session for a subscription plan. Returns the redirect URL.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["plan_id"],
+                "properties": {
+                  "plan_id": { "type": "string", "format": "uuid" },
+                  "success_url": { "type": "string", "format": "uri" },
+                  "cancel_url": { "type": "string", "format": "uri" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Checkout session created", "content": { "application/json": { "schema": { "properties": { "success": { "type": "boolean" }, "data": { "type": "object", "properties": { "checkout_url": { "type": "string", "format": "uri" } } } } } } } }
+        }
+      }
+    },
+    "/api/stripe/subscription-details/": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "Get subscription status",
+        "description": "Returns the current plan, status, billing period, and credit usage.",
+        "responses": { "200": { "description": "Subscription details" } }
+      }
+    },
+    "/api/stripe/cancel-subscription/": {
+      "post": {
+        "tags": ["Billing"],
+        "summary": "Cancel subscription",
+        "description": "Sets the subscription to cancel at the end of the current billing period.",
+        "responses": { "200": { "description": "Subscription will cancel at period end" } }
+      }
+    },
+    "/api/stripe/transactions/": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "Transaction history",
+        "description": "Returns paginated list of invoices and payments.",
+        "responses": { "200": { "description": "Transaction list" } }
+      }
+    },
+    "/api/stripe/webhook": {
+      "post": {
+        "tags": ["Billing"],
+        "summary": "Stripe webhook",
+        "description": "Receives and processes Stripe webhook events. Authenticated via Stripe signature header, **not** JWT.\n\n**Events handled:** `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`",
+        "security": [],
+        "parameters": [
+          { "name": "Stripe-Signature", "in": "header", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Event processed" }, "400": { "description": "Invalid signature" } }
+      }
+    },
+    "/api/organisation/": {
+      "post": {
+        "tags": ["Organisations"],
+        "summary": "Create organisation",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["organisation_name"], "properties": { "organisation_name": { "type": "string" } } } } }
+        },
+        "responses": { "201": { "description": "Organisation created" } }
+      },
+      "get": {
+        "tags": ["Organisations"],
+        "summary": "List user organisations",
+        "responses": { "200": { "description": "User's organisations" } }
+      },
+      "patch": {
+        "tags": ["Organisations"],
+        "summary": "Update organisation",
+        "responses": { "200": { "description": "Organisation updated" } }
+      }
+    },
+    "/api/organisation/{org_id}/users": {
+      "get": {
+        "tags": ["Organisations"],
+        "summary": "List organisation members",
+        "parameters": [{ "name": "org_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Member list with roles" } }
+      }
+    },
+    "/api/organisation/{user_id}": {
+      "delete": {
+        "tags": ["Organisations"],
+        "summary": "Remove member from organisation",
+        "description": "Requires `settings:team:delete` permission.",
+        "parameters": [{ "name": "user_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Member removed" }, "403": { "description": "Missing permission" } }
+      }
+    },
+    "/api/scan-schedule/": {
+      "post": {
+        "tags": ["Scan Schedules"],
+        "summary": "Create scan schedule",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["website_id", "frequency"],
+                "properties": {
+                  "website_id": { "type": "string", "format": "uuid" },
+                  "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly", "once"] },
+                  "scheduled_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Schedule created" } }
+      },
+      "get": {
+        "tags": ["Scan Schedules"],
+        "summary": "List scan schedules",
+        "parameters": [{ "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Schedule list" } }
+      },
+      "patch": {
+        "tags": ["Scan Schedules"],
+        "summary": "Update scan schedule",
+        "responses": { "200": { "description": "Schedule updated" } }
+      },
+      "delete": {
+        "tags": ["Scan Schedules"],
+        "summary": "Delete scan schedule",
+        "responses": { "200": { "description": "Schedule deleted" } }
+      }
+    },
+    "/api/uptime-monitor/": {
+      "post": {
+        "tags": ["Uptime Monitor"],
+        "summary": "Create uptime monitor",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["website_id"], "properties": { "website_id": { "type": "string", "format": "uuid" }, "check_interval": { "type": "integer", "example": 5, "description": "Minutes between checks" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Monitor created" } }
+      },
+      "get": {
+        "tags": ["Uptime Monitor"],
+        "summary": "Get uptime monitors",
+        "parameters": [{ "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Monitor list with status" } }
+      },
+      "patch": {
+        "tags": ["Uptime Monitor"],
+        "summary": "Update uptime monitor",
+        "responses": { "200": { "description": "Monitor updated" } }
+      },
+      "delete": {
+        "tags": ["Uptime Monitor"],
+        "summary": "Delete uptime monitor",
+        "responses": { "200": { "description": "Monitor deleted" } }
+      }
+    },
+    "/api/rum/": {
+      "get": {
+        "tags": ["RUM"],
+        "summary": "Get RUM metrics",
+        "description": "Returns Real User Monitoring data — Core Web Vitals, session counts, page performance from live visitors.",
+        "parameters": [
+          { "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "from_date", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "to_date", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": { "200": { "description": "RUM metrics" } }
+      },
+      "post": {
+        "tags": ["RUM"],
+        "summary": "Save RUM configuration",
+        "responses": { "200": { "description": "RUM config saved" } }
+      },
+      "patch": {
+        "tags": ["RUM"],
+        "summary": "Update RUM settings",
+        "responses": { "200": { "description": "RUM settings updated" } }
+      }
+    },
+    "/api/search-console/auth": {
+      "get": {
+        "tags": ["Search Console"],
+        "summary": "Initiate Search Console OAuth",
+        "description": "Redirects to Google OAuth with `webmasters.readonly` scope.",
+        "responses": { "302": { "description": "Redirect to Google consent" } }
+      }
+    },
+    "/api/search-console/auth/callback": {
+      "get": {
+        "tags": ["Search Console"],
+        "summary": "Search Console OAuth callback",
+        "security": [],
+        "responses": { "302": { "description": "Redirect back to app after storing tokens" } }
+      }
+    },
+    "/api/search-console/": {
+      "get": {
+        "tags": ["Search Console"],
+        "summary": "Get Search Console data",
+        "parameters": [{ "name": "website_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Search performance data" } }
+      }
+    },
+    "/api/region/": {
+      "get": {
+        "tags": ["Regions"],
+        "summary": "List scan regions",
+        "description": "Returns all available scan server regions. Cached in Redis on startup.",
+        "responses": {
+          "200": {
+            "description": "Region list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" }, "code": { "type": "string" } } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/offboarding/": {
+      "post": {
+        "tags": ["Offboarding"],
+        "summary": "Delete account",
+        "description": "Records the offboarding reason, cancels any active subscription, and marks the account for deletion.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "reason": { "type": "string" }, "feedback": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Account marked for deletion" } }
       }
     }
   }

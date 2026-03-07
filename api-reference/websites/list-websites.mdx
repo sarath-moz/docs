@@ -1,0 +1,50 @@
+---
+title: "List Websites"
+openapi: "GET /api/website/"
+description: "Get all websites belonging to the authenticated user's organisation."
+---
+
+Returns all websites registered to the user's organisation. Optionally filter to a single website by providing `website_id`.
+
+## Query Parameters
+
+<ParamField query="website_id" type="string">
+  Filter the results to a single website by its UUID.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of website objects. Each item includes `id`, `website_url`, `website_name`, `status`, `rum_status`, `enable_aaa`, and `created_time`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/website/" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "website-uuid-1",
+      "website_url": "https://example.com",
+      "website_name": "Example Site",
+      "organisation_id": "org-uuid",
+      "status": "active",
+      "rum_status": "enabled",
+      "enable_aaa": false,
+      "created_time": "2025-03-01T12:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>

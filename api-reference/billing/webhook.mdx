@@ -1,0 +1,42 @@
+---
+title: "Stripe Webhook"
+openapi: "POST /api/stripe/webhook"
+description: "Receive and process Stripe subscription lifecycle events."
+---
+
+Receives webhook events from Stripe and updates subscription/billing state in the database. Authenticated using the **Stripe-Signature header**, not a JWT bearer token.
+
+<Warning>
+  Do **not** call this endpoint directly. It is intended only for Stripe's webhook delivery system. Configure the webhook URL in your Stripe Dashboard under **Developers → Webhooks**.
+</Warning>
+
+## Handled Events
+
+| Event | Action |
+|---|---|
+| `customer.subscription.created` | Activate plan, set credit limits |
+| `customer.subscription.updated` | Update plan details and limits |
+| `customer.subscription.deleted` | Downgrade to free, revoke permissions |
+| `invoice.payment_succeeded` | Reset monthly credit counters |
+| `invoice.payment_failed` | Mark subscription as `past_due` |
+
+## Headers
+
+<ParamField header="Stripe-Signature" type="string" required>
+  HMAC signature from Stripe for payload verification. Format: `t=timestamp,v1=signature`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the event was processed successfully.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Event processed"
+}
+```
+</ResponseExample>

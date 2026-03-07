@@ -1,0 +1,46 @@
+---
+title: "Create Organisation"
+openapi: "POST /api/organisation/"
+description: "Create a new organisation for the authenticated user."
+---
+
+Creates a new organisation and assigns the authenticated user as its owner. Each user can belong to multiple organisations.
+
+## Request Body
+
+<ParamField body="organisation_name" type="string" required>
+  Display name for the new organisation.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the organisation has been created.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The new organisation object — `id`, `organisation_name`, `status`, `created_time`.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "organisation_name": "Acme Web Agency"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "org-uuid-here",
+    "organisation_name": "Acme Web Agency",
+    "status": "active",
+    "audit_max_number_of_pages": null,
+    "created_time": "2025-03-06T09:00:00Z"
+  }
+}
+```
+</ResponseExample>

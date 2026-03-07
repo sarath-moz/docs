@@ -1,0 +1,40 @@
+---
+title: "Delete Website"
+openapi: "DELETE /api/website/"
+description: "Remove a website and all its associated data from the organisation."
+---
+
+Permanently removes the website from the organisation. All associated scans, results, and reports are also deleted. Requires the `settings:website:delete` permission.
+
+<Warning>
+  This action is **irreversible**. All scan history and results for this website will be permanently deleted.
+</Warning>
+
+## Request Body
+
+<ParamField body="website_id" type="string" required>
+  UUID of the website to delete.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the website has been deleted.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "website_id": "website-uuid-here"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Website deleted successfully"
+}
+```
+</ResponseExample>

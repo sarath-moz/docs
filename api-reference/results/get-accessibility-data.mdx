@@ -1,0 +1,60 @@
+---
+title: "Get Accessibility Data"
+openapi: "GET /api/accessibility/"
+description: "Get detailed WCAG issue data for a completed scan."
+---
+
+Returns a detailed breakdown of all WCAG violations found during a scan — including axe rule IDs, affected elements, impact level, and which pages the issue was found on.
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website.
+</ParamField>
+
+<ParamField query="audit_id" type="string" required>
+  UUID of the completed scan to retrieve accessibility data for.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of accessibility issue objects, each containing:
+  - `rule_id` — Axe rule identifier (e.g. `image-alt`, `color-contrast`)
+  - `impact` — Severity: `critical`, `serious`, `moderate`, `minor`
+  - `description` — Human-readable description of the violation
+  - `affected_pages` — List of page URLs where the issue was found
+  - `element_count` — Total number of affected elements
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/accessibility/?website_id=website-uuid&audit_id=audit-uuid" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "rule_id": "image-alt",
+      "impact": "critical",
+      "description": "Images must have alternative text",
+      "wcag_criteria": ["1.1.1"],
+      "element_count": 7,
+      "affected_pages": [
+        "https://example.com/about",
+        "https://example.com/team"
+      ]
+    }
+  ]
+}
+```
+</ResponseExample>

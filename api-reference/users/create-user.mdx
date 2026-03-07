@@ -1,0 +1,71 @@
+---
+title: "Create User"
+openapi: "POST /api/user/"
+description: "Register a new user account."
+---
+
+Creates a new user account. No authentication required. After registration, send the user through [email verification](/api-reference/users/send-otp) to activate the account.
+
+<Note>
+  Rate-limited to **10 requests per minute** per IP address.
+</Note>
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  User's email address. Must be unique.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Minimum **8 characters**.
+</ParamField>
+
+<ParamField body="first_name" type="string" required>
+  User's first name.
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  User's last name.
+</ParamField>
+
+<ParamField body="user_type" type="string">
+  Account type. One of: `webowner`, `agencyowner`, `other`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the account is created.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Created user data including `id` and `email`.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "email": "newdev@webyes.com",
+  "password": "securePass123",
+  "first_name": "Alex",
+  "last_name": "Smith",
+  "user_type": "webowner"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "email": "newdev@webyes.com",
+    "first_name": "Alex",
+    "last_name": "Smith",
+    "email_verified": false,
+    "user_status": "active"
+  }
+}
+```
+</ResponseExample>

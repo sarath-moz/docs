@@ -1,0 +1,52 @@
+---
+title: "List Regions"
+openapi: "GET /api/region/"
+description: "Get all available scan server regions."
+---
+
+Returns all available geographic regions where audit scans can be executed. Use a `region_id` from this list when adding or updating a website to control which server location performs the scan.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of region objects, each containing `id`, `region_name`, `region_code`, and `status`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl https://api.webyes.com/api/region/ \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "region-uuid-1",
+      "region_name": "US East (N. Virginia)",
+      "region_code": "us-east-1",
+      "status": "active"
+    },
+    {
+      "id": "region-uuid-2",
+      "region_name": "EU West (Ireland)",
+      "region_code": "eu-west-1",
+      "status": "active"
+    },
+    {
+      "id": "region-uuid-3",
+      "region_name": "Asia Pacific (Singapore)",
+      "region_code": "ap-southeast-1",
+      "status": "active"
+    }
+  ]
+}
+```
+</ResponseExample>

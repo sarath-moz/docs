@@ -1,0 +1,65 @@
+---
+title: "Scan History"
+openapi: "GET /api/website-audit/history/"
+description: "Get paginated scan history for a website."
+---
+
+Returns a paginated list of all past scans for the specified website, ordered by most recent first.
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website to retrieve scan history for.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of records to skip (for pagination).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="10">
+  Maximum number of records to return per page.
+</ParamField>
+
+<ParamField query="device" type="string">
+  Filter by device type: `mobile` or `desktop`.
+</ParamField>
+
+<ParamField query="enable_aaa" type="boolean">
+  Filter by whether AAA-level checks were enabled.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of scan objects — each with `id`, `status`, `scan_type`, `audit_start_time`, `audit_end_time`, `total_credits_used`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/website-audit/history/?website_id=website-uuid&limit=20&offset=0" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "audit-uuid-1",
+      "website_id": "website-uuid",
+      "status": "completed",
+      "scan_type": "full",
+      "audit_start_time": "2025-03-05T10:00:00Z",
+      "audit_end_time": "2025-03-05T10:15:00Z",
+      "total_credits_used": 42
+    }
+  ]
+}
+```
+</ResponseExample>

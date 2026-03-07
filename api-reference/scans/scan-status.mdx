@@ -1,0 +1,56 @@
+---
+title: "Scan Status"
+openapi: "GET /api/website-audit/latest-audit-status/"
+description: "Poll the current status of the most recent or a specific scan."
+---
+
+Returns the live status of a scan. Poll this endpoint to track scan progress until `status` changes to `completed` or `failed`.
+
+<Tip>
+  Poll every **5–10 seconds**. The scan lifecycle is: `scheduled` → `in_progress` → `completed` (or `failed` / `canceled`).
+</Tip>
+
+## Query Parameters
+
+<ParamField query="website_id" type="string" required>
+  UUID of the website to check the scan status for.
+</ParamField>
+
+<ParamField query="audit_id" type="string">
+  UUID of a specific scan. If omitted, returns the status of the most recent scan.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Current scan status: `scheduled`, `in_progress`, `completed`, `failed`, or `canceled`.
+</ResponseField>
+
+<ResponseField name="data.audit_id" type="string">
+  UUID of the scan being tracked.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl "https://api.webyes.com/api/website-audit/latest-audit-status/?website_id=website-uuid&audit_id=audit-uuid" \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "status": "in_progress",
+    "audit_id": "audit-uuid-here",
+    "pages_scanned": 24,
+    "total_pages": 100
+  }
+}
+```
+</ResponseExample>

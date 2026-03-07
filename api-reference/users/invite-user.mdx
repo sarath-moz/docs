@@ -1,0 +1,41 @@
+---
+title: "Invite User"
+openapi: "POST /api/user/invite-user/"
+description: "Invite a user to join the organisation by email."
+---
+
+Sends an invitation email to the specified address, granting them a role within the caller's organisation. Requires the `settings:team:add` permission.
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  Email address of the person to invite.
+</ParamField>
+
+<ParamField body="role_id" type="string" required>
+  UUID of the role to assign to the invited user.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the invitation email has been sent.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "email": "newmember@webyes.com",
+  "role_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Invitation sent to newmember@webyes.com"
+}
+```
+</ResponseExample>

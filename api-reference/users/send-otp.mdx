@@ -1,0 +1,40 @@
+---
+title: "Send Email OTP"
+openapi: "POST /api/user/verify-email/"
+description: "Send a one-time password to the user's email for verification."
+---
+
+Sends a 6-digit OTP to the specified email address. Used to verify email ownership after registration or when re-verifying a changed address.
+
+<Note>
+  OTP codes expire after **15 minutes**. Rate-limited per email address.
+</Note>
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  The email address to send the OTP to.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the OTP has been dispatched.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "email": "dev@webyes.com"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "OTP sent to dev@webyes.com"
+}
+```
+</ResponseExample>

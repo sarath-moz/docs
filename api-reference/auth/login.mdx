@@ -1,0 +1,65 @@
+---
+title: "Login"
+openapi: "POST /api/auth/login"
+description: "Authenticate with email and password to receive a JWT access token."
+---
+
+Authenticates a user with their email and password. On success, returns a signed **RS256 JWT** access token that must be included in the `Authorization` header for all protected endpoints.
+
+<Note>
+  This endpoint is rate-limited to **10 requests per minute** per IP address.
+</Note>
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  The user's registered email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's account password.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the login succeeds.
+</ResponseField>
+
+<ResponseField name="data.access_token" type="string">
+  Signed JWT (RS256). Pass this as `Authorization: Bearer <token>` on subsequent requests.
+</ResponseField>
+
+<ResponseField name="data.user" type="object">
+  The authenticated user's profile — id, email, name, status, and `is_from_suit` flag.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "email": "dev@webyes.com",
+  "password": "securepassword123"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1dWlkIiwi...",
+    "user": {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "dev@webyes.com",
+      "first_name": "Jane",
+      "last_name": "Dev",
+      "email_verified": true,
+      "user_status": "active",
+      "is_from_suit": true,
+      "created_time": "2025-01-15T10:00:00Z"
+    }
+  }
+}
+```
+</ResponseExample>

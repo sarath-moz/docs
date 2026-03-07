@@ -1,0 +1,45 @@
+---
+title: "Verify Email OTP"
+openapi: "POST /api/user/verify-email-otp/"
+description: "Verify the OTP code to confirm email ownership."
+---
+
+Validates the OTP sent to the user's email address and marks it as verified. Call [Send Email OTP](/api-reference/users/send-otp) first to dispatch the code.
+
+<Warning>
+  OTP codes expire after **15 minutes** and are single-use. Submitting an expired or invalid code returns `400`.
+</Warning>
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  The email address the OTP was sent to.
+</ParamField>
+
+<ParamField body="otp" type="string" required>
+  The 6-digit OTP code from the email.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the OTP is valid and the email has been marked verified.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "email": "dev@webyes.com",
+  "otp": "482910"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Email verified successfully"
+}
+```
+</ResponseExample>

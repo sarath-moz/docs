@@ -1,0 +1,51 @@
+---
+title: "Create Uptime Monitor"
+openapi: "POST /api/uptime-monitor/"
+description: "Set up uptime monitoring for a website."
+---
+
+Creates an uptime monitor that periodically checks whether the website is accessible. Alerts are sent via Slack and email when downtime is detected.
+
+## Request Body
+
+<ParamField body="website_id" type="string" required>
+  UUID of the website to monitor.
+</ParamField>
+
+<ParamField body="check_interval" type="integer" default="5">
+  How often to check availability, in minutes. Minimum: `1`, Maximum: `60`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` when the monitor has been created.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The new monitor object — `id`, `website_id`, `check_interval`, `status`.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "website_id": "website-uuid-here",
+  "check_interval": 5
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "id": "monitor-uuid-here",
+    "website_id": "website-uuid-here",
+    "check_interval": 5,
+    "status": "active",
+    "created_time": "2025-03-06T09:00:00Z"
+  }
+}
+```
+</ResponseExample>

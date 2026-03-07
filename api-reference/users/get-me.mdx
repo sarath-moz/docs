@@ -1,0 +1,64 @@
+---
+title: "Get Current User"
+openapi: "GET /api/user/me/"
+description: "Retrieve the authenticated user's profile, organisation, and permissions."
+---
+
+Returns the full profile of the currently authenticated user, including their organisation membership and permission slugs.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data.user" type="object">
+  User profile — id, email, name, status, `is_from_suit` flag, `email_verified`.
+</ResponseField>
+
+<ResponseField name="data.organisation" type="object">
+  The user's current organisation — id, name, status, page limits.
+</ResponseField>
+
+<ResponseField name="data.permissions" type="array">
+  List of permission slugs granted to this user. Example slugs:
+  `settings:website:add`, `scan:full_scan:add`, `settings:team:delete`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl https://api.webyes.com/api/user/me/ \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "dev@webyes.com",
+      "first_name": "Jane",
+      "last_name": "Dev",
+      "email_verified": true,
+      "user_status": "active",
+      "is_from_suit": true
+    },
+    "organisation": {
+      "id": "org-uuid-here",
+      "organisation_name": "Webyes Inc",
+      "status": "active",
+      "audit_max_number_of_pages": 500
+    },
+    "permissions": [
+      "settings:website:add",
+      "settings:website:delete",
+      "scan:full_scan:add",
+      "settings:team:add"
+    ]
+  }
+}
+```
+</ResponseExample>

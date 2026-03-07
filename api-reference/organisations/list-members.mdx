@@ -1,0 +1,56 @@
+---
+title: "List Members"
+openapi: "GET /api/organisation/{org_id}/users"
+description: "Get all members of an organisation and their roles."
+---
+
+Returns all users who are members of the specified organisation, including their assigned roles and join dates.
+
+## Path Parameters
+
+<ParamField path="org_id" type="string" required>
+  UUID of the organisation to list members for.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  `true` on a successful request.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of member objects — each with `user_id`, `email`, `first_name`, `last_name`, `role`, `joined_at`.
+</ResponseField>
+
+<RequestExample>
+```bash
+curl https://api.webyes.com/api/organisation/org-uuid-here/users \
+  -H "Authorization: Bearer <token>"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "user_id": "user-uuid-1",
+      "email": "owner@webyes.com",
+      "first_name": "Jane",
+      "last_name": "Owner",
+      "role": "owner",
+      "joined_at": "2025-01-10T09:00:00Z"
+    },
+    {
+      "user_id": "user-uuid-2",
+      "email": "dev@webyes.com",
+      "first_name": "Alex",
+      "last_name": "Dev",
+      "role": "developer",
+      "joined_at": "2025-02-01T10:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>
