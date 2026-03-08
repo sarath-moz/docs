@@ -1,0 +1,137 @@
+---
+title: "Overview"
+description: "Architecture and responsibilities of the auditor-report microservice."
+---
+
+The **auditor-report** service is a standalone Node.js microservice responsible for two core jobs: generating PDF audit reports and sending all transactional emails across the Webyes platform.
+
+<CardGroup cols={2}>
+  <Card title="PDF Reports" icon="file-pdf">
+    Renders full audit reports, accessibility summaries, and single-page snapshots as PDFs using React-PDF, then stores them in AWS S3.
+  </Card>
+  <Card title="Email Delivery" icon="envelope">
+    Sends 30+ templated emails — OTPs, invites, trial lifecycle, billing alerts, uptime alerts — via Resend.
+  </Card>
+  <Card title="Job Queue" icon="list-check">
+    BullMQ + Redis for async PDF generation. Report requests return immediately; the worker picks them up in the background.
+  </Card>
+  <Card title="Agency & Promotions" icon="tag">
+    Generates one-time Stripe coupon codes and dispatches agency lead notifications via Slack.
+  </Card>
+</CardGroup>
+
+---
+
+## Service at a Glance
+
+| Property | Value |
+|---|---|
+| **Runtime** | Node.js 20 (Alpine) |
+| **Framework** | Express.js |
+| **Language** | TypeScript 5.4 |
+| **Port** | `8001` (configurable via `PORT`) |
+| **Queue** | BullMQ over Redis |
+| **Email provider** | Resend (primary) |
+| **PDF engine** | `@react-pdf/renderer` |
+| **Storage** | AWS S3 (`webyes-report` bucket) |
+| **Notifications** | Slack Web API |
+| **Payments** | Stripe (coupon generation) |
+| **Deployment** | Docker → AWS ECR |
+
+---
+
+## Architecture
+
+The service has two parts that build and deploy together:
+
+<AccordionGroup>
+  <Accordion title="Backend — Express + BullMQ Worker (server/)">
+    The HTTP server exposes 5 endpoints. The most important one (`POST /api/v1/report`) immediately enqueues a BullMQ job and returns a job ID. A co-located **worker** in the same process picks up the job asynchronously, generates the PDF, uploads it to S3, and sends the email.
+
+    ```
+    HTTP Request
+        ↓
+    Express Route Handler
+        ↓
+    BullMQ: addJob(reportQueue, data)   ← returns jobId instantly
+        ↓
+    BullMQ Worker (async)
+        ↓
+    createTemplate() → PDF buffer
+        ↓
+    uploadToS3(buffer, auditId)
+        ↓
+    sendEmail({ template: "report" })
+        ↓
+    [Optional] Agency email + Slack
+    ```
+  </Accordion>
+
+  <Accordion title="Frontend — React PDF Viewer (src/)">
+    A Vite + React app that renders PDF reports in the browser using `@react-pdf/renderer`'s `<PDFViewer>` component. Used for previewing report layouts during development. In production this serves as a standalone PDF preview tool.
+
+    The React components in `src/reports/` are **shared** between the frontend viewer and the backend PDF renderer — the same `<Audit />`, `<Accessibility />`, and `<SinglePage />` components are used server-side via `ReactPDF.renderToStream()`.
+  </Accordion>
+
+  <Accordion title="Email Templates (server/emails/)">
+    35+ React Email components using `@react-email/components`. Templates are rendered to HTML strings server-side and sent via Resend's API. All templates share the Webyes brand colours (`#0B66E4` primary, `#2E3240` body text).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Data Flow: Report Generation
+
+<Steps>
+  <Step title="API call from auditor-backend">
+    The Python backend calls `POST /api/v1/report` after a scan completes, passing the full audit data payload and the user's email address.
+  </Step>
+  <Step title="Job queued in Redis">
+    The Express handler immediately adds a BullMQ job to the `auditReport-{env}` queue in Redis and returns `{ success: true, jobId }` to the caller.
+  </Step>
+  <Step title="Worker generates PDF">
+    The BullMQ worker picks up the job, calls `createTemplate(reportData, type)`, which renders the appropriate React-PDF component (`Audit`, `Accessibility`, or `SinglePage`) to a binary buffer.
+  </Step>
+  <Step title="Upload to S3">
+    The PDF buffer is uploaded to the `webyes-report` S3 bucket with the `audit_id` as the object key.
+  </Step>
+  <Step title="Email sent via Resend">
+    A templated email with a download link (`/api/v1/scan/report/download/{id}`) is sent to the user. The link generates a presigned S3 URL (valid for 1 hour) and redirects.
+  </Step>
+  <Step title="Agency lead (optional)">
+    If an `agencyEmail` was provided in the request, a separate lead email is sent to the agency and a Slack notification is posted to the configured channel.
+  </Step>
+</Steps>
+
+---
+
+## Repository Structure
+
+```
+auditor-report/
+├── server/                    # Backend (Express + BullMQ)
+│   ├── index.ts               # App entry — routes + worker
+│   ├── create-template.tsx    # PDF generation orchestrator
+│   ├── middleware/
+│   │   └── auth.ts            # Bearer token middleware
+│   ├── services/
+│   │   ├── mail.ts            # Resend email service (30+ templates)
+│   │   ├── s3.ts              # S3 upload / presigned URL
+│   │   ├── slack.ts           # Slack notifications
+│   │   ├── ses.ts             # AWS SES (fallback)
+│   │   └── stripe.ts          # One-time coupon generation
+│   ├── utils/
+│   │   └── redis.ts           # Redis helper
+│   └── emails/                # React Email templates (35+)
+│
+├── src/                       # Frontend PDF viewer (Vite + React)
+│   ├── reports/               # Shared PDF components (Audit, A11y, SinglePage)
+│   ├── components/            # Metric, chart, table components
+│   ├── types/index.ts         # PDFData and related types
+│   └── utils/operations.ts   # Formatting helpers
+│
+├── Dockerfile                 # Node 20 Alpine image
+├── docker-compose.yml         # Local dev compose
+├── deploy.sh                  # ECR push script
+└── .env.sample                # Environment variable template
+```

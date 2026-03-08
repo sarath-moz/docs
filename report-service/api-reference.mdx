@@ -1,0 +1,314 @@
+---
+title: "API Reference"
+description: "All HTTP endpoints exposed by the auditor-report service."
+---
+
+The report service exposes **5 endpoints** on port `8001`. The base URL in production is `https://report.webyes.com`.
+
+## Authentication
+
+Two endpoints require a **Bearer token** in the `Authorization` header:
+
+```
+Authorization: Bearer <API_KEY>
+```
+
+The `API_KEY` must match the `API_KEY` environment variable on the server. Requests missing the header receive `401 Unauthorized`; wrong keys receive `403 Forbidden`.
+
+Public endpoints (no auth): `POST /api/v1/report`, `GET /api/v1/scan/report/download/:id`, `POST /api/v1/slack/test`.
+
+---
+
+## Endpoints
+
+### POST /api/v1/report
+
+**`POST`**
+```
+/api/v1/report
+```
+
+Queue a PDF report generation job. Returns immediately — the PDF is generated and emailed asynchronously via BullMQ.
+
+**Authentication:** None required
+
+<ParamField body="report" type="object" required>
+  Full audit data payload. See [PDF Reports](/report-service/pdf-reports) for the complete `PDFData` shape.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Report variant to generate.
+  - `"full"` — Multi-page report with all metrics (accessibility, performance, SEO, quality)
+  - `"report"` — Standard accessibility report
+  - `"accessibility"` — Accessibility-only summary
+  - `"singlePage"` — Single-page snapshot
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Email address to send the completed report to.
+</ParamField>
+
+<ParamField body="id" type="string" required>
+  Audit ID. Used as the S3 object key and in the download URL.
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  Website URL that was scanned. Displayed in the email.
+</ParamField>
+
+<ParamField body="agencyEmail" type="string">
+  **Optional.** If provided, a separate agency lead email is sent to this address and a Slack notification is posted.
+</ParamField>
+
+<ParamField body="audit_id" type="string">
+  Alternative to `id`. If both are provided, `audit_id` takes precedence.
+</ParamField>
+
+<RequestExample>
+```json
+{
+  "report": {
+    "type": "full",
+    "audit_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "url": "https://example.com",
+    "device": "desktop",
+    "metricsScore": {
+      "accessibility": { "score": 82, "issues": 24 },
+      "performance": { "score": 74, "issues": 6 },
+      "seo": { "score": 91, "issues": 2 },
+      "quality": { "score": 88, "issues": 5 }
+    }
+  },
+  "type": "full",
+  "email": "user@example.com",
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "url": "https://example.com",
+  "agencyEmail": "agency@partner.com"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "message": "Successfully added job to the queue",
+  "success": true,
+  "jobId": "1842"
+}
+```
+</ResponseExample>
+
+---
+
+### GET /api/v1/scan/report/download/:id
+
+**`GET`**
+```
+/api/v1/scan/report/download/:id
+```
+
+Redirect to a presigned S3 download URL for a generated PDF report.
+
+**Authentication:** None required
+
+<ParamField path="id" type="string" required>
+  Audit ID — the S3 object key assigned when the PDF was uploaded.
+</ParamField>
+
+**Response:** `301 Redirect` to a presigned S3 URL. The presigned URL expires after **1 hour** (3600 seconds).
+
+<RequestExample>
+```bash
+curl -L https://report.webyes.com/api/v1/scan/report/download/3fa85f64-5717-4562-b3fc-2c963f66afa6 \
+  --output report.pdf
+```
+</RequestExample>
+
+<ResponseExample>
+```
+HTTP/1.1 301 Moved Permanently
+Location: https://webyes-report.s3.eu-west-2.amazonaws.com/3fa85f64-5717-4562-b3fc-2c963f66afa6?X-Amz-Algorithm=...&X-Amz-Expires=3600&X-Amz-Signature=...
+```
+</ResponseExample>
+
+---
+
+### POST /api/v1/email
+
+**`POST`**
+```
+/api/v1/email
+```
+
+Send a transactional email using any of the 30+ available templates.
+
+**Authentication:** Required (`Authorization: Bearer <API_KEY>`)
+
+<ParamField body="to" type="string" required>
+  Recipient email address.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Email subject line.
+</ParamField>
+
+<ParamField body="template" type="string" required>
+  Template identifier. See the full list in [Email Templates](/report-service/email-templates).
+</ParamField>
+
+<ParamField body="data" type="object" required>
+  Template variables. Shape varies per template — see [Email Templates](/report-service/email-templates) for each template's required fields.
+</ParamField>
+
+<ParamField body="from" type="string">
+  Override the sender address. Defaults to `MAIL_FROM_ADDRESS` env variable.
+</ParamField>
+
+<RequestExample>
+```json
+{
+  "to": "dev@webyes.com",
+  "subject": "Verify your email address",
+  "template": "verify",
+  "data": {
+    "otp": "482910",
+    "name": "Jane Dev",
+    "appUrl": "https://app.webyes.com"
+  }
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "message": "Email sent successfully",
+  "success": true
+}
+```
+</ResponseExample>
+
+---
+
+### POST /api/v1/apps/accessibility/emails
+
+**`POST`**
+```
+/api/v1/apps/accessibility/emails
+```
+
+Same as `POST /api/v1/email` but automatically sets `data.app = "accessibility"` in the template context. Use this when sending emails from the accessibility standalone app so templates can customize branding accordingly.
+
+**Authentication:** Required (`Authorization: Bearer <API_KEY>`)
+
+Request and response body are identical to `POST /api/v1/email`.
+
+---
+
+### POST /api/v1/embed
+
+**`POST`**
+```
+/api/v1/embed
+```
+
+Generate a one-time Stripe promotion code and email it to an agency partner.
+
+**Authentication:** Required (`Authorization: Bearer <API_KEY>`)
+
+**Flow:**
+1. Calls Stripe to create a single-use promotion code from a pre-configured coupon
+2. Sends the `agency-coupon` email template with the generated code
+
+<ParamField body="email" type="string" required>
+  Agency partner's email address.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Agency partner's name. Used in the email greeting.
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Partner's role or company. Included in the email template.
+</ParamField>
+
+<RequestExample>
+```json
+{
+  "email": "partner@agency.com",
+  "name": "Alex Smith",
+  "role": "Digital Agency Owner"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "message": "Email sent successfully",
+  "success": true
+}
+```
+</ResponseExample>
+
+---
+
+### POST /api/v1/slack/test
+
+**`POST`**
+```
+/api/v1/slack/test
+```
+
+Send a test lead notification to the configured Slack channel. Also used internally when a report with an `agencyEmail` is generated.
+
+**Authentication:** None required
+
+<ParamField body="website" type="string" required>
+  Website URL to display in the Slack message.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Lead's email address.
+</ParamField>
+
+<ParamField body="reportUrl" type="string">
+  Optional URL to the generated report. Adds a "View Report" button to the Slack message.
+</ParamField>
+
+<ParamField body="message" type="string">
+  Optional custom message body.
+</ParamField>
+
+<RequestExample>
+```json
+{
+  "website": "https://example.com",
+  "email": "lead@example.com",
+  "reportUrl": "https://report.webyes.com/api/v1/scan/report/download/audit-id",
+  "message": "Interested in agency plan"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>
+
+---
+
+## Error Responses
+
+All endpoints return a consistent error shape:
+
+| Status | Meaning |
+|---|---|
+| `400` | Bad request — missing required fields |
+| `401` | Missing `Authorization` header |
+| `403` | Invalid API key |
+| `404` | Resource not found (e.g. audit ID with no S3 object) |
+| `500` | Internal server error — check server logs and Redis |

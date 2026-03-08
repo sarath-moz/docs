@@ -1,0 +1,309 @@
+---
+title: "Email Templates"
+description: "Complete catalog of all 35+ transactional email templates."
+---
+
+All emails are React components built with `@react-email/components`, rendered to HTML server-side, and sent via **Resend**. Pass the template name as the `template` field in `POST /api/v1/email`.
+
+**Brand colours used across all templates:**
+
+| Token | Hex |
+|---|---|
+| Primary blue | `#0B66E4` |
+| Body text | `#2E3240` |
+| Heading text | `#242424` |
+| Background | `#eef1fb` |
+| Footer background | `#f7f7f8` |
+| Top border accent | `6px solid #0B66E4` |
+
+---
+
+## User Onboarding & Auth
+
+<AccordionGroup>
+  <Accordion title="verify — Email OTP verification">
+    Sends a 6-digit OTP for email address verification.
+
+    **Template name:** `verify`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `otp` | string | The 6-digit OTP code |
+    | `name` | string | User's first name |
+    | `appUrl` | string | Link back to the app |
+
+    **Subject:** `"Verify your email address"`
+  </Accordion>
+
+  <Accordion title="verify-email-link — Link-based email verification">
+    Sends a clickable verification link instead of an OTP code.
+
+    **Template name:** `verify-email-link`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `verificationLink` | string | Full verification URL |
+    | `name` | string | User's first name |
+  </Accordion>
+
+  <Accordion title="reset — Password reset">
+    Sends a password reset link.
+
+    **Template name:** `reset`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `resetLink` | string | Full password reset URL |
+    | `name` | string | User's first name |
+
+    **Subject:** `"Reset your password"`
+  </Accordion>
+
+  <Accordion title="invite — Team invitation">
+    Invites a new user to join an organisation.
+
+    **Template name:** `invite`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `inviteLink` | string | Invitation acceptance URL |
+    | `name` | string | Inviter's name |
+    | `organisationName` | string | Organisation name |
+  </Accordion>
+
+  <Accordion title="transfer-site — Site transfer notification">
+    Notifies a user that a website has been transferred to their account.
+
+    **Template name:** `transfer-site`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `websiteUrl` | string | The transferred website |
+    | `fromEmail` | string | Original owner's email |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Report Emails
+
+<AccordionGroup>
+  <Accordion title="report — Standard report ready">
+    Notifies the user that their audit report is ready for download.
+
+    **Template name:** `report`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `reportUrl` | string | Download URL for the PDF |
+    | `url` | string | Scanned website URL |
+    | `score` | number | Overall accessibility score (0–100) |
+
+    **Subject:** `"Your audit report is ready"`
+  </Accordion>
+
+  <Accordion title="report-full — Full suite report">
+    Full suite report email with all metric scores.
+
+    **Template name:** `report-full`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `reportUrl` | string | PDF download link |
+    | `url` | string | Scanned website URL |
+    | `accessibilityScore` | number | Accessibility score |
+    | `performanceScore` | number | Performance score |
+    | `seoScore` | number | SEO score |
+    | `qualityScore` | number | Quality score |
+  </Accordion>
+
+  <Accordion title="report-agency — Agency lead notification">
+    Sent to the `agencyEmail` when a report is generated with an agency partner attached.
+
+    **Template name:** `report-agency`
+
+    **Required `data` fields:**
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `reportUrl` | string | Link to the generated report |
+    | `clientEmail` | string | End-user's email |
+    | `websiteUrl` | string | Scanned website |
+  </Accordion>
+
+  <Accordion title="report-primary — Primary metric report">
+    Single-metric focused report email.
+
+    **Template name:** `report-primary`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `reportUrl` | string | PDF download link |
+    | `url` | string | Scanned website URL |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Trial Lifecycle
+
+These emails are sent automatically during the trial period progression.
+
+| Template name | When sent |
+|---|---|
+| `welcome-trial-suite` | Immediately on suite trial start |
+| `welcome-trial-accessibility` | Immediately on accessibility trial start |
+| `trial-reminder` | During trial period as a general reminder |
+| `trial-expires-soon` | 3 days before trial expires |
+| `three-day-trial-end` | Final 3-day warning |
+| `trial-expires-today` | On the day of expiry |
+| `trial-expired` | After trial has ended |
+| `credit-expired-trial` | When trial scan credits are exhausted |
+
+**Required `data` fields (all trial emails):**
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | User's first name |
+| `appUrl` | string | Link to the app |
+| `daysRemaining` | number | Days left (where applicable) |
+
+---
+
+## Billing & Credits
+
+<AccordionGroup>
+  <Accordion title="purchase-success — Purchase confirmation">
+    Sent after a successful subscription payment.
+
+    **Template name:** `purchase-success`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `planName` | string | Name of the purchased plan |
+    | `amount` | string | Amount paid (e.g. `"$99.00"`) |
+    | `name` | string | User's first name |
+    | `appUrl` | string | App URL |
+  </Accordion>
+
+  <Accordion title="credit-reset — Monthly credit reset">
+    Notifies the user that their scan credits have been reset for the new billing cycle.
+
+    **Template name:** `credit-reset`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `name` | string | User's first name |
+    | `creditsAmount` | number | New credit balance |
+    | `appUrl` | string | App URL |
+  </Accordion>
+
+  <Accordion title="low-credit — Low credit warning">
+    Alert when the organisation's scan credits fall below a threshold.
+
+    **Template name:** `low-credit`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `name` | string | User's first name |
+    | `creditsRemaining` | number | Credits left |
+    | `appUrl` | string | App URL |
+  </Accordion>
+
+  <Accordion title="agency-coupon — Agency coupon code">
+    Sends a generated Stripe promotion code to an agency partner. Triggered via `POST /api/v1/embed`.
+
+    **Template name:** `agency-coupon`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `name` | string | Partner's name |
+    | `couponCode` | string | Generated Stripe promo code |
+    | `discountPercent` | number | Discount percentage |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Uptime Monitoring
+
+<AccordionGroup>
+  <Accordion title="site-down — Website down alert">
+    Sent immediately when an uptime monitor detects a website is unreachable.
+
+    **Template name:** `site-down`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `websiteUrl` | string | Affected website URL |
+    | `detectedAt` | string | ISO 8601 timestamp of detection |
+    | `name` | string | User's name |
+  </Accordion>
+
+  <Accordion title="site-up — Website recovered">
+    Sent when the uptime monitor confirms a previously down website is accessible again.
+
+    **Template name:** `site-up`
+
+    | Field | Type | Description |
+    |---|---|---|
+    | `websiteUrl` | string | Recovered website URL |
+    | `downtimeDuration` | string | How long the site was down (e.g. `"14 minutes"`) |
+    | `name` | string | User's name |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Scan Lifecycle
+
+| Template name | Description |
+|---|---|
+| `suite-schedule-scan-failed` | Scheduled scan failed in the full-suite app |
+| `accessibility-schedule-scan-failed` | Scheduled scan failed in the accessibility app |
+
+**Required `data` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `websiteUrl` | string | The website that failed to scan |
+| `name` | string | User's first name |
+| `appUrl` | string | Link to retry the scan |
+
+---
+
+## Platform & Feature Emails
+
+| Template name | Description |
+|---|---|
+| `release-notification` | New feature or release announcement |
+| `feedback` | User feedback form submission confirmation |
+| `embed` | Instructions for embedding the Webyes widget |
+| `rum-script` | Instructions for installing the RUM tracking snippet |
+| `gamefied_checker` | Gamified accessibility checker result (also triggers Slack notification) |
+| `agency-direct` | Direct outreach to agency partners |
+
+---
+
+## Alt Text Generator App
+
+These templates are used by the separate **alt text generator** tool:
+
+| Template name | Description |
+|---|---|
+| `alt-text-generator/alt-verify` | Email verification for the alt text generator app |
+| `alt-text-generator/alt-reset-password` | Password reset for the alt text generator app |

@@ -1,0 +1,227 @@
+---
+title: "Setup & Deployment"
+description: "Environment variables, local development, and production deployment for auditor-report."
+---
+
+## Prerequisites
+
+| Requirement | Version |
+|---|---|
+| Node.js | 20+ |
+| npm | 10+ |
+| Redis | 7+ (local or remote) |
+| Docker | 24+ (for container deployment) |
+
+---
+
+## Local Development
+
+<Steps>
+  <Step title="Clone and install">
+    ```bash
+    cd /path/to/auditor-report
+    npm install
+    ```
+  </Step>
+  <Step title="Configure environment">
+    ```bash
+    cp .env.sample .env
+    # Edit .env with your credentials (see Environment Variables below)
+    ```
+  </Step>
+  <Step title="Start Redis">
+    ```bash
+    # Docker (quick)
+    docker run -d -p 6379:6379 redis:7-alpine
+
+    # Or use your local Redis installation
+    redis-server
+    ```
+  </Step>
+  <Step title="Run dev servers">
+    ```bash
+    # Both frontend + backend (hot reload)
+    npm run dev
+
+    # Backend only
+    npm run dev:backend
+
+    # Frontend PDF viewer only
+    npm run dev:frontend
+    ```
+  </Step>
+</Steps>
+
+The backend starts on `http://localhost:8001` by default. The frontend Vite dev server starts on `http://localhost:5173`.
+
+---
+
+## Environment Variables
+
+All variables are required unless marked **optional**.
+
+### Core
+
+<ParamField env="PORT" type="number" default="8001">
+  Port the Express server listens on.
+</ParamField>
+
+<ParamField env="API_KEY" type="string">
+  Bearer token required for authenticated endpoints (`/api/v1/email`, `/api/v1/embed`). Must match the value sent by auditor-backend.
+</ParamField>
+
+<ParamField env="REPORT_ENV" type="string">
+  Deployment environment. Sets the BullMQ queue name suffix: `auditReport-staging` vs `auditReport-prod`.
+  Values: `staging` | `prod`
+</ParamField>
+
+<ParamField env="BASE_URL" type="string">
+  Public URL of this service. Used to build report download links in emails.
+  Example: `https://report.webyes.com`
+</ParamField>
+
+<ParamField env="APP_URL" type="string">
+  URL of the main Webyes app. Used in email template links.
+  Example: `https://app.webyes.com`
+</ParamField>
+
+<ParamField env="ACCESSIBILITY_APP_URL" type="string">
+  URL of the accessibility standalone app. Used in accessibility email templates.
+</ParamField>
+
+<ParamField env="VITE_API_URL" type="string">
+  API URL injected into the Vite frontend build. Example: `https://report.webyes.com`
+</ParamField>
+
+### Redis
+
+<ParamField env="REDIS_HOST" type="string" default="localhost">
+  Redis server hostname.
+</ParamField>
+
+<ParamField env="REDIS_PORT" type="number" default="6379">
+  Redis server port.
+</ParamField>
+
+### Email (Resend)
+
+<ParamField env="RESEND_API_KEY" type="string">
+  API key from [resend.com](https://resend.com). All emails are sent through Resend.
+</ParamField>
+
+<ParamField env="MAIL_FROM_ADDRESS" type="string" default="WebYes <noreply@webyes.com>">
+  The `From` address used for all outgoing emails.
+</ParamField>
+
+### AWS
+
+<ParamField env="AWS_REGION" type="string">
+  AWS region for S3 and SES. Example: `eu-west-2`
+</ParamField>
+
+<ParamField env="AWS_ACCESS_KEY_ID" type="string">
+  AWS IAM access key. Use an IAM role in production instead.
+</ParamField>
+
+<ParamField env="AWS_SECRET_ACCESS_KEY" type="string">
+  AWS IAM secret key.
+</ParamField>
+
+<ParamField env="S3_BUCKET_NAME" type="string" default="webyes-report">
+  S3 bucket where generated PDF reports are stored.
+</ParamField>
+
+### Stripe
+
+<ParamField env="STRIPE_SECRET_KEY" type="string">
+  Stripe secret key. Used to create one-time promotion codes for agency coupons.
+</ParamField>
+
+### Slack
+
+<ParamField env="SLACK_BOT_TOKEN" type="string">
+  Slack app bot token (`xoxb-...`). Required for lead notifications.
+</ParamField>
+
+<ParamField env="SLACK_CHANNEL_ID" type="string">
+  Slack channel ID where lead notifications are posted.
+</ParamField>
+
+### CDN
+
+<ParamField env="CDN_URL" type="string" default="https://cdn.webyes.com">
+  CDN base URL used for assets in email templates.
+</ParamField>
+
+<ParamField env="SCRIPT_URL" type="string">
+  URL of the Webyes embed script. Used in the embed/RUM email templates.
+</ParamField>
+
+<ParamField env="RUM_SDK_URL" type="string">
+  RUM SDK endpoint URL. Used in the RUM setup email template.
+</ParamField>
+
+---
+
+## Build
+
+```bash
+# Build backend only (outputs to dist-server/)
+npm run build:backend
+
+# Build frontend only (outputs to dist/)
+npm run build:frontend
+
+# Build both
+npm run build:frontend && npm run build:backend
+```
+
+---
+
+## Docker
+
+### Local container
+
+```bash
+docker-compose up --build
+```
+
+The `docker-compose.yml` reads from `.env` and maps port `${PORT}` (default `8001`).
+
+### Production deployment (AWS ECR)
+
+The `deploy.sh` script builds for `linux/arm64` and pushes to ECR:
+
+```bash
+# Deploy to staging
+./deploy.sh staging
+
+# Deploy to production
+./deploy.sh prod
+```
+
+**What `deploy.sh` does:**
+1. Authenticates Docker to ECR (`aws ecr get-login-password`)
+2. Builds the image with `--platform linux/arm64`
+3. Tags as `{ECR_REGISTRY}/auditor-report:{env}`
+4. Pushes to ECR
+
+<Note>
+  ECR registry: `471112865883.dkr.ecr.eu-west-1.amazonaws.com`
+  Requires AWS CLI configured with ECR push permissions.
+</Note>
+
+---
+
+## npm Scripts Reference
+
+| Script | Purpose |
+|---|---|
+| `npm run dev` | Start frontend + backend concurrently (hot reload) |
+| `npm run dev:frontend` | Vite frontend dev server only |
+| `npm run dev:backend` | tsx watch backend only |
+| `npm run build:frontend` | Production Vite build → `dist/` |
+| `npm run build:backend` | tsc compile backend → `dist-server/` |
+| `npm run start:backend` | Start compiled server (production) |
+| `npm run lint` | ESLint check |
+| `npm run preview` | Preview production frontend build |

@@ -63,6 +63,26 @@
         ]
       },
       {
+        "tab": "Report Service",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "report-service/overview",
+              "report-service/setup"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "report-service/api-reference",
+              "report-service/email-templates",
+              "report-service/pdf-reports"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {

@@ -1,0 +1,225 @@
+---
+title: "PDF Reports"
+description: "How PDF reports are generated, stored, and downloaded."
+---
+
+The report service generates PDF documents server-side using `@react-pdf/renderer` — the same React components used in the browser PDF viewer are rendered to a binary stream on the server, uploaded to AWS S3, and delivered to users via a presigned download URL.
+
+---
+
+## Report Types
+
+<CardGroup cols={3}>
+  <Card title="Full Report" icon="file-chart-column">
+    All four metrics — Accessibility, Performance, SEO, Quality — across all scanned pages. Multi-page PDF with per-page breakdowns and WCAG issue lists.
+    
+    **type:** `"full"`
+  </Card>
+  <Card title="Accessibility Report" icon="universal-access">
+    Accessibility-only audit. Detailed WCAG level breakdown (A, AA, AAA), issue checklist, and affected page list.
+    
+    **type:** `"accessibility"`
+  </Card>
+  <Card title="Single Page" icon="file">
+    Compact single-page summary with headline scores and top issues only. Used for quick sharing.
+    
+    **type:** `"singlePage"`
+  </Card>
+</CardGroup>
+
+---
+
+## PDF Data Schema
+
+The `report` payload in `POST /api/v1/report` must conform to this structure:
+
+### Top-level `PDFData`
+
+| Field | Type | Description |
+|---|---|---|
+| `type` | `"full" \| "report" \| "single-page"` | Report variant |
+| `audit_id` | string | UUID of the scan |
+| `website_id` | string | UUID of the website |
+| `url` | string | Scanned website URL |
+| `device` | `"desktop" \| "mobile"` | Device emulation used during scan |
+| `date.date` | string | Scan date (e.g. `"2025-03-06"`) |
+| `date.time` | string | Scan time (e.g. `"10:24 AM"`) |
+| `totalIssue` | number | Total issues across all pages |
+| `criticalIssue` | number | Critical issues count |
+| `metricsScore` | `Metrics` | Scores for each audit category |
+| `pageWise` | `PageWise[]` | Per-page score breakdown |
+| `issueList` | `IssueList[]` | All WCAG/Axe issues found |
+| `webvitals` | `WebVitals[]` | Core Web Vitals data |
+| `pdf_settings` | object | `{ logo: string, color: string }` — custom branding |
+
+### `Metrics` object
+
+| Field | Type | Description |
+|---|---|---|
+| `accessibility` | `MetricsScore` | Accessibility score + issue counts |
+| `performance` | `MetricsScore` | Performance score |
+| `seo` | `MetricsScore` | SEO score |
+| `quality` | `MetricsScore` | Best practices / quality score |
+
+### `MetricsScore` object
+
+| Field | Type | Description |
+|---|---|---|
+| `score` | number | Score 0–100 |
+| `issues` | number | Total issues count |
+| `critical` | number | Critical issues count |
+| `levelA` | number? | WCAG Level A violations |
+| `levelAA` | number? | WCAG Level AA violations |
+| `levelAAA` | number? | WCAG Level AAA violations |
+| `checkList` | object? | Accessibility guidelines checklist |
+
+### Full request example
+
+```json
+{
+  "report": {
+    "type": "full",
+    "audit_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "website_id": "website-uuid-here",
+    "url": "https://example.com",
+    "device": "desktop",
+    "date": { "date": "2025-03-06", "time": "10:24 AM" },
+    "totalIssue": 84,
+    "criticalIssue": 3,
+    "pdf_settings": {
+      "logo": "https://cdn.webyes.com/logo.png",
+      "color": "#0B66E4"
+    },
+    "metricsScore": {
+      "accessibility": {
+        "score": 82,
+        "issues": 24,
+        "critical": 3,
+        "levelA": 8,
+        "levelAA": 14,
+        "levelAAA": 2
+      },
+      "performance": { "score": 74, "issues": 6, "critical": 0 },
+      "seo": { "score": 91, "issues": 2, "critical": 0 },
+      "quality": { "score": 88, "issues": 5, "critical": 0 }
+    },
+    "pageWise": [
+      {
+        "url": "https://example.com/",
+        "accessibility": 85,
+        "performance": 78,
+        "seo": 92,
+        "quality": 90,
+        "issueCount": 12
+      }
+    ],
+    "issueList": [
+      {
+        "ruleId": "image-alt",
+        "impact": "critical",
+        "description": "Images must have alternative text",
+        "wcagCriteria": ["1.1.1"],
+        "elementCount": 7,
+        "pages": ["https://example.com/about"]
+      }
+    ],
+    "webvitals": [
+      {
+        "name": "LCP",
+        "value": 2100,
+        "unit": "ms",
+        "rating": "good"
+      }
+    ]
+  },
+  "type": "full",
+  "email": "user@example.com",
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "url": "https://example.com"
+}
+```
+
+---
+
+## Generation Pipeline
+
+<Steps>
+  <Step title="Request received">
+    `POST /api/v1/report` validates the body and enqueues a BullMQ job with `removeOnComplete: true` and `removeOnFail: true`. The job name is `auditReport-{REPORT_ENV}`.
+  </Step>
+  <Step title="Template selection">
+    `create-template.tsx` maps the `type` field to a React-PDF component:
+
+    | `type` value | Component |
+    |---|---|
+    | `"full"` | `<Audit />` from `src/reports/Audit.tsx` |
+    | `"accessibility"` | `<Accessibility />` from `src/reports/Accessibility.tsx` |
+    | `"singlePage"` | `<SinglePage />` from `src/reports/SinglePage.tsx` |
+  </Step>
+  <Step title="Font loading">
+    The Inter font (weights 100–900) is registered with React-PDF via `Font.register()` pointing to Google Fonts CDN. This runs once at server start.
+  </Step>
+  <Step title="Render to stream">
+    `ReactPDF.renderToStream(component)` renders the component to a Node.js readable stream. Stream chunks are collected into a `Buffer`.
+  </Step>
+  <Step title="Upload to S3">
+    `uploadToS3(buffer, auditId)` calls `PutObjectCommand` with `ContentType: "application/pdf"`. The S3 key is the `audit_id`.
+  </Step>
+  <Step title="Email notification">
+    `sendEmail({ email, template: "report", data: { reportUrl, url, score } })` sends the report-ready email via Resend.
+  </Step>
+</Steps>
+
+---
+
+## PDF Download
+
+Reports are accessed via a presigned S3 URL, not served directly:
+
+```
+GET /api/v1/scan/report/download/{audit_id}
+    ↓
+S3 getSignedUrl(GetObjectCommand, { expiresIn: 3600 })
+    ↓
+301 Redirect → https://webyes-report.s3.amazonaws.com/{audit_id}?X-Amz-Signature=...
+```
+
+<Note>
+  Presigned URLs expire after **1 hour** (3600 seconds). If you need a longer-lived link, re-request the download endpoint to generate a fresh URL.
+</Note>
+
+---
+
+## S3 Storage Layout
+
+All PDFs are stored in the `webyes-report` bucket (region: `eu-west-2`):
+
+```
+webyes-report/
+└── {audit_id}        ← PDF file, ContentType: application/pdf
+```
+
+No folder structure — each audit ID maps directly to a flat key.
+
+---
+
+## Frontend PDF Viewer
+
+The Vite frontend (`src/App.tsx`) renders the same PDF components in the browser for preview/development:
+
+```tsx
+import { PDFViewer } from "@react-pdf/renderer"
+import Audit from "./reports/Audit"
+
+<PDFViewer width="100%" height="800px">
+  <Audit reportData={sampleData} />
+</PDFViewer>
+```
+
+To test report layouts without running the full pipeline:
+
+```bash
+npm run dev:frontend
+# Open http://localhost:5173
+# Edit src/doc/suite.json to change sample data
+```
